@@ -129,7 +129,7 @@ void LoadBoard(char *filename, Board board) {
 				firstByte <<= 2;
 			}
 			else { //TODO: move to a function
-				curCell = secondByte = 6;
+				curCell = secondByte >> 6;
 				if (curCell == 0)
 					board[i][j] = ' ';
 				else if (curCell == Tmask)
