@@ -65,6 +65,7 @@ void StoreBoard(Board board, char *filename) {
 	unsigned char curChar;
 	FILE *bin_file;
 	bin_file = fopen(filename, "wb");
+	checkFile(bin_file);
 	int i, j;
 	for (i = 0; i < BOARD_SIZE; i++) {
 		curChar = 0;
@@ -95,11 +96,42 @@ void StoreBoard(Board board, char *filename) {
 			}
 		}
 	}
+	fclose(bin_file);
 }
 
 //Q6:
-voidLoadBoard(char *filename, Board board) {
-
+void LoadBoard(char *filename, Board board) {
+	FILE* bin_file;
+	bin_file = fopen(filename, "rb");
+	checkFile(bin_file);
+	unsigned char firstByte, secondByte, curCell;
+	int i, j;
+	for (i = 0; i < BOARD_SIZE || feof(bin_file); i++) {
+		fread(&firstByte, sizeof(unsigned char), 1, bin_file);
+		fread(&secondByte, sizeof(unsigned char), 1, bin_file); //each line is represented by 2 bytes
+		for (j = 0; j < BOARD_SIZE; j++) {
+			if (j < BOARD_SIZE / 2) { //TODO: move to a function
+				curCell = firstByte >> 6;
+				if (curCell == 0)
+					board[i][j] = ' ';
+				else if (curCell == Tmask)
+					board[i][j] = 'T';
+				else
+					board[i][j] = 'B';
+				firstByte <<= 2;
+			}
+			else { //TODO: move to a function
+				curCell = secondByte = 6;
+				if (curCell == 0)
+					board[i][j] = ' ';
+				else if (curCell == Tmask)
+					board[i][j] = 'T';
+				else
+					board[i][j] = 'B';
+				secondByte <<= 2;
+			}
+		}
+	}
 }
 
 //Q7:
@@ -131,5 +163,12 @@ void resetBoard(Board board) {
 			}
 		}
 	
+	}
+}
+
+void checkFile(FILE* f) { //this function checks if the file was opened successfully
+	if (!f) {
+		printf("Couldn't open the file\n");
+		exit(0);
 	}
 }
