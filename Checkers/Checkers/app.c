@@ -175,5 +175,13 @@ void resetBoard(Board board) {
 }
 
 int main() {
+	Board testBoard, newTestBoard;
+	printf("Resetting...");
+	resetBoard(testBoard);
+	printf("Storing...");
+	StoreBoard(testBoard, "testfile.bin");
+	printf("Loading...");
+	LoadBoard("testfile.bin", newTestBoard);
+	printf("Done!");
 	return 0;
 }
