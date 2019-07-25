@@ -63,6 +63,8 @@ void Turn(Board board, Player player) {
 //Q5:
 void StoreBoard(Board board, char *filename) {
 	unsigned char curChar;
+	FILE *bin_file;
+	bin_file = fopen(filename, "wb");
 	int i, j;
 	for (i = 0; i < BOARD_SIZE; i++) {
 		curChar = 0;
@@ -74,7 +76,7 @@ void StoreBoard(Board board, char *filename) {
 				else if (board[i][j] == 'B')
 					curChar |= Bmask;
 				if (j == 3 || j == 7) {
-					//TODO: write curChar to file
+					fwrite(curChar, sizeof(unsigned char), 1, bin_file);
 					curChar = 0;
 				}
 			}
@@ -87,7 +89,7 @@ void StoreBoard(Board board, char *filename) {
 				else if (board[i][j] == 'B')
 					curChar |= Bmask;
 				if (j == 2 || j == 6) {
-					//TODO: write curChar to file
+					fwrite(curChar, sizeof(unsigned char), 1, bin_file);
 					curChar = 0;
 				}
 			}
