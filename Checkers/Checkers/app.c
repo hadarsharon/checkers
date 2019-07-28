@@ -36,9 +36,9 @@ typedef struct _SingleSourceMovesList {
 	SingleSourceMovesListCell *tail;
 } SingleSourceMovesList;
 
-typedef struct _multipeSourceMovesListCell {
-	SingleSourceMovesList *single_source_mpves_list;
-	struct _multipeSourceMovesListCell *next;
+typedef struct _multipleSourceMovesListCell {
+	SingleSourceMovesList *single_source_moves_list;
+	struct _multipleSourceMovesListCell *next;
 } MultipleSourceMovesList;
 
 void checkFile(FILE* f) { //this function checks if the file was opened successfully
