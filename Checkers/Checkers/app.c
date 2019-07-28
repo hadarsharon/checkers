@@ -41,6 +41,13 @@ typedef struct _multipleSourceMovesListCell {
 	struct _multipleSourceMovesListCell *next;
 } MultipleSourceMovesList;
 
+void checkMemoryAllocation(void* ptr) { //This function checks if the memory allocation succeeded
+	if (!ptr) { //We print an error and then exit this program
+		printf("Memory allocation failed");
+		exit(0);
+	}
+}
+
 void checkFile(FILE* f) { //this function checks if the file was opened successfully
 	if (!f) {
 		printf("Couldn't open the file\n");
