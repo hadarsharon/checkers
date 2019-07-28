@@ -75,6 +75,7 @@ BOOL isGameOver(int curRow, char piece, char* winner) {
 
 BOOL isMovePossible(checkersPos movePos, char piece, Board board) {
 	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
+	// Move is not possible if a friendly game piece is already there
 	if (board[moveRow][moveCol] == piece)
 		return FALSE;
 	else
@@ -82,6 +83,7 @@ BOOL isMovePossible(checkersPos movePos, char piece, Board board) {
 }
 
 BOOL checkCapture(int moveRow, int moveCol, char piece, Board board) {
+	// If an opponent game piece is in the box the game piece is moving to, mark a capture
 	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != ' ')
 		return TRUE;
 	else
@@ -95,7 +97,7 @@ void checkFile(FILE* f) { // This function checks if the file was opened success
 	}
 }
 
-void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextRight, checkersPos* nextLeft) {
+void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, checkersPos* nextRight) {
 	checkersPos* curPos = curNode->pos;
 	int curRow = rowToInt(curPos->row);
 	int curCol = colToInt(curPos->col);
@@ -128,7 +130,7 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextRight, c
 			nextRight->col = curPos->col + 1;
 		}
 	}
-	else { // Row != 0,7 , Col != 0,7
+	else { // Row != 0,7 && Col != 0,7
 		if (curPiece == 'B') {
 			nextLeft->row = curPos->row - 1;
 			nextLeft->col = curPos->col - 1;
@@ -147,14 +149,22 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextRight, c
 //Q1:
 SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	// Check if the box contains a game piece, else return NULL
+	SingleSourceMovesTreeNode* curNode = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+	curNode->pos = src;
+	checkersPos nextLeft, nextRight;
+	findNextCells(curNode, &nextLeft, &nextRight);
+	isMovePossible(
 	int col = colToInt(src->col);
 	int row = rowToInt(src->row);
 	if (board[row][col] == ' ') {
 		return NULL;
 	}
 	else {
-		SingleSourceMovesTreeNode *move = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		
+		/*
+		SingleSourceMovesTreeNode* nextLeft = 
+		nextLeft->pos = findNextCells(
+		SingleSourceMovesTreeNode* nextRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		*/
 	}
 }
 
