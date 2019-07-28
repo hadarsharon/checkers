@@ -73,9 +73,9 @@ BOOL isGameOver(int curRow, char piece, char* winner) {
 		return FALSE;
 }
 
-BOOL isMovePossible(checkersPos src, checkersPos movePos, Board board) {
-	int srcRow = rowToInt(src.row), srcCol = colToInt(src.col);
-	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
+BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board) {
+	int srcRow = rowToInt(src->row), srcCol = colToInt(src->col);
+	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
 	char piece = board[srcRow][srcCol];
 	// Move is not possible if a friendly game piece is already there
 	if (board[moveRow][moveCol] == piece)
@@ -148,25 +148,43 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, ch
 	}
 }
 
-//Q1:
-SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
-	// Check if the box contains a game piece, else return NULL
-	SingleSourceMovesTreeNode* curNode = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-	curNode->pos = src;
-	checkersPos nextLeft, nextRight;
-	findNextCells(curNode, &nextLeft, &nextRight);
-	isMovePossible(
-	int col = colToInt(src->col);
-	int row = rowToInt(src->row);
-	if (board[row][col] == ' ') {
+SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode) {
+	checkersPos* nextLeft, * nextRight;
+	findNextCells(tempNode, nextLeft, nextRight);
+	if (isMovePossible(tempNode->pos, nextLeft, tempNode->board) == FALSE &&
+		isMovePossible(tempNode->pos, nextRight, tempNode->board) == FALSE) {
 		return NULL;
 	}
 	else {
-		/*
-		SingleSourceMovesTreeNode* nextLeft = 
-		nextLeft->pos = findNextCells(
-		SingleSourceMovesTreeNode* nextRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		*/
+		if (isMovePossible(tempNode->pos, nextLeft, tempNode->board)) {
+		}
+		if (isMovePossible(tempNode->pos, nextRight, tempNode->board)) {
+		}
+	}
+}
+//Q1:
+SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
+	// Check if the box contains a game piece, else return NULL
+	if (board[rowToInt(src->row)][colToInt(src->col)] == ' ') {
+		return NULL;
+	}
+	else {
+		SingleSourceMovesTree* tree = (SingleSourceMovesTree*)calloc(1, sizeof(SingleSourceMovesTree));
+		SingleSourceMovesTreeNode* root = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		root->board = board;
+		root->pos = src;
+		root->total_captures_so_far = 0;
+		checkersPos *nextLeft, *nextRight;
+		findNextCells(root, nextLeft, nextRight);
+		root->next_move[0] = nextLeft;
+		root->next_move[1] = nextRight;
+		if (isMovePossible(src, nextLeft, board)) {
+			SingleSourceMovesTreeNode* rootLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		}
+		if (isMovePossible(src, nextRight, board)) {
+			SingleSourceMovesTreeNode* rootRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		}
+		tree->source = root;
 	}
 }
 
