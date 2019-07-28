@@ -73,6 +73,20 @@ BOOL isGameOver(int curRow, char piece, char* winner) {
 		return FALSE;
 }
 
+BOOL isMovePossible(int moveRow, int moveCol, char piece, Board board) {
+	if (board[moveRow][moveCol] == piece)
+		return FALSE;
+	else
+		return TRUE;
+}
+
+BOOL checkCapture(int moveRow, int moveCol, char piece, Board board) {
+	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != ' ')
+		return TRUE;
+	else
+		return FALSE;
+}
+
 void checkFile(FILE* f) { // This function checks if the file was opened successfully
 	if (!f) {
 		printf("Couldn't open the file\n");
