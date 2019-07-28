@@ -84,7 +84,8 @@ BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board) {
 		return TRUE;
 }
 
-BOOL checkCapture(int moveRow, int moveCol, char piece, Board board) {
+BOOL checkCapture(checkersPos* movePos, char piece, Board board) {
+	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
 	// If an opponent game piece is in the box the game piece is moving to, mark a capture
 	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != ' ')
 		return TRUE;
@@ -148,7 +149,7 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, ch
 	}
 }
 
-SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode) {
+SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
 	checkersPos* nextLeftPos, * nextRightPos;
 	findNextCells(tempNode, nextLeftPos, nextRightPos);
 	tempNode->next_move[0] = NULL;
@@ -158,16 +159,25 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 		newLeft->board = tempNode->board;
 		newLeft->pos = nextLeftPos;
 		newLeft->total_captures_so_far = tempNode->total_captures_so_far;
-		tempNode->next_move[0] = FindSingleSourceMovesRec(newLeft);
+		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE)
+			newLeft->total_captures_so_far++;
+		tempNode->next_move[0] = FindSingleSourceMovesRec(newLeft, piece);
 	}
 	if (isMovePossible(tempNode->pos, nextRightPos, tempNode->board)) {
 		SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
 		newRight->board = tempNode->board;
 		newRight->pos = nextRightPos;
 		newRight->total_captures_so_far = tempNode->total_captures_so_far;
-		tempNode->next_move[1] = FindSingleSourceMovesRec(newRight);
+		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE)
+			newRight->total_captures_so_far ++;
+		tempNode->next_move[1] = FindSingleSourceMovesRec(newRight, piece);
 	}
 	return tempNode;
+}
+
+char findPiece(checkersPos* src, Board board) {
+	int row = rowToInt(src->row), col = colToInt(src->col);
+	return board[row][col];
 }
 
 //Q1:
@@ -177,12 +187,13 @@ SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 		return NULL;
 	}
 	else {
+		char piece = findPiece(src, board);
 		SingleSourceMovesTree* tree = (SingleSourceMovesTree*)calloc(1, sizeof(SingleSourceMovesTree));
 		SingleSourceMovesTreeNode* root = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
 		root->board = board;
 		root->pos = src;
 		root->total_captures_so_far = 0;
-		FindSingleSourceMovesRec(root);
+		FindSingleSourceMovesRec(root, piece);
 		tree->source = root;
 		return tree;
 	}
