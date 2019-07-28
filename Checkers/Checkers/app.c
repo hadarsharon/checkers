@@ -149,19 +149,27 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, ch
 }
 
 SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode) {
-	checkersPos* nextLeft, * nextRight;
-	findNextCells(tempNode, nextLeft, nextRight);
-	if (isMovePossible(tempNode->pos, nextLeft, tempNode->board) == FALSE &&
-		isMovePossible(tempNode->pos, nextRight, tempNode->board) == FALSE) {
-		return NULL;
+	checkersPos* nextLeftPos, * nextRightPos;
+	findNextCells(tempNode, nextLeftPos, nextRightPos);
+	tempNode->next_move[0] = NULL;
+	tempNode->next_move[1] = NULL;
+	if (isMovePossible(tempNode->pos, nextLeftPos, tempNode->board)) {
+		SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		newLeft->board = tempNode->board;
+		newLeft->pos = nextLeftPos;
+		newLeft->total_captures_so_far = tempNode->total_captures_so_far;
+		tempNode->next_move[0] = FindSingleSourceMovesRec(newLeft);
 	}
-	else {
-		if (isMovePossible(tempNode->pos, nextLeft, tempNode->board)) {
-		}
-		if (isMovePossible(tempNode->pos, nextRight, tempNode->board)) {
-		}
+	if (isMovePossible(tempNode->pos, nextRightPos, tempNode->board)) {
+		SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		newRight->board = tempNode->board;
+		newRight->pos = nextRightPos;
+		newRight->total_captures_so_far = tempNode->total_captures_so_far;
+		tempNode->next_move[1] = FindSingleSourceMovesRec(newRight);
 	}
+	return tempNode;
 }
+
 //Q1:
 SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	// Check if the box contains a game piece, else return NULL
@@ -174,17 +182,9 @@ SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 		root->board = board;
 		root->pos = src;
 		root->total_captures_so_far = 0;
-		checkersPos *nextLeft, *nextRight;
-		findNextCells(root, nextLeft, nextRight);
-		root->next_move[0] = nextLeft;
-		root->next_move[1] = nextRight;
-		if (isMovePossible(src, nextLeft, board)) {
-			SingleSourceMovesTreeNode* rootLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		}
-		if (isMovePossible(src, nextRight, board)) {
-			SingleSourceMovesTreeNode* rootRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		}
+		FindSingleSourceMovesRec(root);
 		tree->source = root;
+		return tree;
 	}
 }
 
