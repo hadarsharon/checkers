@@ -6,6 +6,7 @@
 #define Tmask 00000001
 #define Bmask 00000010
 
+
 typedef struct _checkersPos {
 	char row, col;
 } checkersPos;
@@ -40,6 +41,10 @@ typedef struct _multipleSourceMovesListCell {
 	SingleSourceMovesList *single_source_moves_list;
 	struct _multipleSourceMovesListCell *next;
 } MultipleSourceMovesList;
+
+int rowToInt(checkersPos pos) { //This function receives a position and returns its row's int equivalent
+	return pos.row - 'A';
+}
 
 void checkMemoryAllocation(void* ptr) { //This function checks if the memory allocation succeeded
 	if (!ptr) { //We print an error and then exit this program
