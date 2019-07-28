@@ -73,7 +73,8 @@ BOOL isGameOver(int curRow, char piece, char* winner) {
 		return FALSE;
 }
 
-BOOL isMovePossible(int moveRow, int moveCol, char piece, Board board) {
+BOOL isMovePossible(checkersPos movePos, char piece, Board board) {
+	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
 	if (board[moveRow][moveCol] == piece)
 		return FALSE;
 	else
