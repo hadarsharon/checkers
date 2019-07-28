@@ -6,6 +6,9 @@
 #define Tmask 00000001
 #define Bmask 00000010
 
+typedef int BOOL;
+#define TRUE 1
+#define FALSE 0
 
 typedef struct _checkersPos {
 	char row, col;
@@ -55,6 +58,19 @@ void checkMemoryAllocation(void* ptr) { // This function checks if the memory al
 		printf("Memory allocation failed");
 		exit(0);
 	}
+}
+
+BOOL isGameOver(int curRow, char piece, char* winner) {
+	if (curRow == 0 && piece == 'B') { // B or T reached the end
+		*winner = 'B';
+		return TRUE;
+	}
+	else if (curRow == 7 && piece == 'T') {
+		*winner = 'T';
+		return TRUE;
+	}
+	else
+		return FALSE;
 }
 
 void checkFile(FILE* f) { // This function checks if the file was opened successfully
