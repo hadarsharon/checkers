@@ -42,7 +42,7 @@ typedef struct _multipleSourceMovesListCell {
 	struct _multipleSourceMovesListCell *next;
 } MultipleSourceMovesList;
 
-int rowToInt(checkersPos pos) { //This function receives a position and returns its row's int equivalent
+int rowToInt(char row) { //This function receives a position and returns its row's int equivalent
 	return pos.row - 'A';
 }
 
