@@ -48,9 +48,21 @@ void checkFile(FILE* f) { //this function checks if the file was opened successf
 	}
 }
 
+checkersPos findNextCells(checkersPos* currentCell) {
+	int col = atoi(currentCell->col) - 1;
+	int row;
+}
+
 //Q1:
 SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
-
+	// Check if the box contains a game piece, else return NULL
+	if (board[src->row][src->col] == ' ') {
+		return NULL;
+	}
+	else {
+		SingleSourceMovesTreeNode *move = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		
+	}
 }
 
 //Q2:
