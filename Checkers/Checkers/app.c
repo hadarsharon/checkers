@@ -42,33 +42,83 @@ typedef struct _multipleSourceMovesListCell {
 	struct _multipleSourceMovesListCell *next;
 } MultipleSourceMovesList;
 
-int rowToInt(char row) { //This function receives a position and returns its row's int equivalent
-	return pos.row - 'A';
+int colToInt(char col) { // This function receives a position and returns its col's int equivalent
+	return atoi(col) - 1;
 }
 
-void checkMemoryAllocation(void* ptr) { //This function checks if the memory allocation succeeded
-	if (!ptr) { //We print an error and then exit this program
+int rowToInt(char row) { // This function receives a position and returns its row's int equivalent
+	return row - 'A';
+}
+
+void checkMemoryAllocation(void* ptr) { // This function checks if the memory allocation succeeded
+	if (!ptr) { // We print an error and then exit this program
 		printf("Memory allocation failed");
 		exit(0);
 	}
 }
 
-void checkFile(FILE* f) { //this function checks if the file was opened successfully
+void checkFile(FILE* f) { // This function checks if the file was opened successfully
 	if (!f) {
 		printf("Couldn't open the file\n");
 		exit(0);
 	}
 }
 
-checkersPos findNextCells(checkersPos* currentCell) {
-	int col = atoi(currentCell->col) - 1;
-	int row;
+void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextRight, checkersPos* nextLeft) {
+	checkersPos* curPos = curNode->pos;
+	int curRow = rowToInt(curPos->row);
+	int curCol = colToInt(curPos->col);
+	char curPiece = curNode->board[curRow][curCol];
+	if ((curRow == 0 && curPiece == 'B') || (curRow == 7 && curPiece == 'T')) { // B or T reached the end
+		nextLeft = NULL;
+		nextRight = NULL;
+	}
+	else if (curCol == 7) {
+		if (curPiece == 'B') {
+			nextRight = NULL;
+			nextLeft->row = curPos->row - 1;
+			nextLeft->col = curPos->col - 1;
+		}
+		else if (curPiece == 'T') {
+			nextRight = NULL;
+			nextLeft->row = curPos->row + 1;
+			nextLeft->col = curPos->col - 1;
+		}
+	}
+	else if (curCol == 0) {
+		if (curPiece == 'B') {
+			nextLeft = NULL;
+			nextRight->row = curPos->row - 1;
+			nextRight->col = curPos->col + 1;
+		}
+		else if (curPiece == 'T') {
+			nextLeft = NULL;
+			nextRight->row = curPos->row + 1;
+			nextRight->col = curPos->col + 1;
+		}
+	}
+	else { // Row != 0,7 , Col != 0,7
+		if (curPiece == 'B') {
+			nextLeft->row = curPos->row - 1;
+			nextLeft->col = curPos->col - 1;
+			nextRight->row = curPos->row - 1;
+			nextRight->col = curPos->col + 1;
+		}
+		else if (curPiece == 'T') {
+			nextLeft->row = curPos->row + 1;
+			nextLeft->col = curPos->col - 1;
+			nextRight->row = curPos->row + 1;
+			nextRight->col = curPos->col + 1;
+		}
+	}
 }
 
 //Q1:
 SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	// Check if the box contains a game piece, else return NULL
-	if (board[src->row][src->col] == ' ') {
+	int col = colToInt(src->col);
+	int row = rowToInt(src->row);
+	if (board[row][col] == ' ') {
 		return NULL;
 	}
 	else {
