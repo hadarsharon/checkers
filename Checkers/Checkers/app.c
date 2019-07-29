@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 #define BOARD_SIZE 8
-#define Tmask 00000001
-#define Bmask 00000010
+#define Tmask 1
+#define Bmask 2
 #define NO_MOVE '\0'
 
 typedef int BOOL;
@@ -242,31 +242,16 @@ void StoreBoard(Board board, char *filename) {
 	int i, j;
 	for (i = 0; i < BOARD_SIZE; i++) {
 		curChar = 0;
-		if (i % 2 == 0) {
-			for (j = 1; j < BOARD_SIZE; j += 2) {
-				curChar <<= 4;
-				if (board[i][j] == 'T')
-					curChar |= Tmask;
-				else if (board[i][j] == 'B')
-					curChar |= Bmask;
-				if (j == 3 || j == 7) {
-					fwrite(&curChar, sizeof(unsigned char), 1, bin_file);
-					curChar = 0;
-				}
+		for (j = 0; j < BOARD_SIZE; j ++) {
+			if (board[i][j] == 'T')
+				curChar |= Tmask;
+			else if (board[i][j] == 'B')
+				curChar |= Bmask;
+			if (j == 3 || j == 7) {
+				fwrite(&curChar, sizeof(unsigned char), 1, bin_file);
+				curChar = 0;
 			}
-		}
-		else {
-			for (j = 0; j < BOARD_SIZE; j += 2) {
-				curChar <<= 4;
-				if (board[i][j] == 'T')
-					curChar |= Tmask;
-				else if (board[i][j] == 'B')
-					curChar |= Bmask;
-				if (j == 2 || j == 6) {
-					fwrite(&curChar, sizeof(unsigned char), 1, bin_file);
-					curChar = 0;
-				}
-			}
+			curChar <<= 2;
 		}
 	}
 	fclose(bin_file);
@@ -339,6 +324,19 @@ void resetBoard(Board board) {
 	}
 }
 
+void printBoard(Board board) {
+	int i, j;
+	char row;
+	printf("\n");
+	for (i = 0; i < BOARD_SIZE; i++) {
+		row = i + 'A';
+		for (j = 0; j < BOARD_SIZE; j++) {
+			printf("|%c|", board[i][j]);
+		}
+		printf("\n");
+	}
+}
+
 int main() {
 	Board testBoard, newTestBoard;
 	checkersPos testPos;
@@ -351,7 +349,8 @@ int main() {
 	StoreBoard(testBoard, "testfile.bin");
 	printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
-	testTree = FindSingleSourceMoves(testBoard, &testPos);
+	printBoard(newTestBoard);
+	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	printf("Done!");
 	return 0;
 }
