@@ -176,18 +176,26 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 		copyBoard(tempNode->board, newLeft->board);
 		newLeft->pos = nextLeftPos;
 		newLeft->total_captures_so_far = tempNode->total_captures_so_far;
-		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE)
+		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE) {
 			newLeft->total_captures_so_far++;
-		tempNode->next_move[0] = FindSingleSourceMovesRec(newLeft, piece);
+			tempNode->next_move[0] = FindSingleSourceMovesRec(newLeft, piece);
+		}
+		else {
+			tempNode->next_move[0] = newLeft;
+		}
 	}
 	if (isMovePossible(tempNode->pos, nextRightPos, tempNode->board)) {
 		SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
 		copyBoard(tempNode->board, newRight->board);
 		newRight->pos = nextRightPos;
 		newRight->total_captures_so_far = tempNode->total_captures_so_far;
-		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE)
-			newRight->total_captures_so_far ++;
-		tempNode->next_move[1] = FindSingleSourceMovesRec(newRight, piece);
+		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE) {
+			newRight->total_captures_so_far++;
+			tempNode->next_move[1] = FindSingleSourceMovesRec(newRight, piece);
+		}
+		else {
+			tempNode->next_move[1] = newRight;
+		}
 	}
 	return tempNode;
 }
@@ -334,8 +342,7 @@ void resetBoard(Board board) {
 				else
 					board[i][j] = 'B';
 			}
-		}
-	
+		}	
 	}
 }
 
