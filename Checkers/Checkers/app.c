@@ -5,6 +5,7 @@
 #define BOARD_SIZE 8
 #define Tmask 00000001
 #define Bmask 00000010
+#define NO_MOVE '\0'
 
 typedef int BOOL;
 #define TRUE 1
@@ -78,7 +79,7 @@ BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board) {
 	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
 	char piece = board[srcRow][srcCol];
 	// Move is not possible if a friendly game piece is already there
-	if (board[moveRow][moveCol] == piece)
+	if (board[moveRow][moveCol] == piece || src->col == NO_MOVE)
 		return FALSE;
 	else
 		return TRUE;
@@ -115,29 +116,35 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, ch
 	int curCol = colToInt(curPos->col);
 	char curPiece = curNode->board[curRow][curCol];
 	if ((curRow == 0 && curPiece == 'B') || (curRow == 7 && curPiece == 'T')) { // B or T reached the end
-		nextLeft = NULL;
-		nextRight = NULL;
+		nextLeft->row = NO_MOVE;
+		nextLeft->col = NO_MOVE;
+		nextRight->row = NO_MOVE;
+		nextRight->col = NO_MOVE;
 	}
 	else if (curCol == 7) {
 		if (curPiece == 'B') {
-			nextRight = NULL;
+			nextRight->row = NO_MOVE;
+			nextRight->col = NO_MOVE;
 			nextLeft->row = curPos->row - 1;
 			nextLeft->col = curPos->col - 1;
 		}
 		else if (curPiece == 'T') {
-			nextRight = NULL;
+			nextRight->row = NO_MOVE;
+			nextRight->col = NO_MOVE;
 			nextLeft->row = curPos->row + 1;
 			nextLeft->col = curPos->col - 1;
 		}
 	}
 	else if (curCol == 0) {
 		if (curPiece == 'B') {
-			nextLeft = NULL;
+			nextLeft->row = NO_MOVE;
+			nextLeft->col = NO_MOVE;
 			nextRight->row = curPos->row - 1;
 			nextRight->col = curPos->col + 1;
 		}
 		else if (curPiece == 'T') {
-			nextLeft = NULL;
+			nextLeft->row = NO_MOVE;
+			nextLeft->col = NO_MOVE;
 			nextRight->row = curPos->row + 1;
 			nextRight->col = curPos->col + 1;
 		}
