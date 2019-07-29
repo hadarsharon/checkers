@@ -79,7 +79,7 @@ BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board) {
 	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
 	char piece = board[srcRow][srcCol];
 	// Move is not possible if a friendly game piece is already there
-	if (board[moveRow][moveCol] == piece || src->col == NO_MOVE)
+	if (board[moveRow][moveCol] == piece || movePos->col == NO_MOVE)
 		return FALSE;
 	else
 		return TRUE;
@@ -343,15 +343,15 @@ int main() {
 	Board testBoard, newTestBoard;
 	checkersPos testPos;
 	SingleSourceMovesTree* testTree;
-	testPos.row = 'A';
-	testPos.col = '2';
+	testPos.row = 'F';
+	testPos.col = '1';
 	printf("Resetting...");
 	resetBoard(testBoard);
 	printf("Storing...");
 	StoreBoard(testBoard, "testfile.bin");
 	printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
-	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
+	testTree = FindSingleSourceMoves(testBoard, &testPos);
 	printf("Done!");
 	return 0;
 }
