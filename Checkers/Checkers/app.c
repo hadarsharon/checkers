@@ -158,7 +158,8 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, ch
 }
 
 SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
-	checkersPos* nextLeftPos, * nextRightPos;
+	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
+	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
 	findNextCells(tempNode, nextLeftPos, nextRightPos);
 	tempNode->next_move[0] = NULL;
 	tempNode->next_move[1] = NULL;
@@ -197,7 +198,9 @@ SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	else {
 		char piece = findPiece(src, board);
 		SingleSourceMovesTree* tree = (SingleSourceMovesTree*)calloc(1, sizeof(SingleSourceMovesTree));
+		checkMemoryAllocation(tree);
 		SingleSourceMovesTreeNode* root = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		checkMemoryAllocation(root);
 		copyBoard(board, root->board);
 		root->pos = src;
 		root->total_captures_so_far = 0;
@@ -330,12 +333,17 @@ void resetBoard(Board board) {
 
 int main() {
 	Board testBoard, newTestBoard;
+	checkersPos testPos;
+	SingleSourceMovesTree* testTree;
+	testPos.row = 'A';
+	testPos.col = '2';
 	printf("Resetting...");
 	resetBoard(testBoard);
 	printf("Storing...");
 	StoreBoard(testBoard, "testfile.bin");
 	printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
+	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	printf("Done!");
 	return 0;
 }
