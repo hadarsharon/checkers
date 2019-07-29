@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BOARD_SIZE 8
 #define Tmask 00000001
@@ -100,6 +101,13 @@ void checkFile(FILE* f) { // This function checks if the file was opened success
 	}
 }
 
+void copyBoard(Board src_board, Board dest_board) {
+	int i;
+	for (i = 0; i < BOARD_SIZE; i++) {
+		strcpy(dest_board[i], src_board[i]);
+	}
+}
+
 void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, checkersPos* nextRight) {
 	checkersPos* curPos = curNode->pos;
 	int curRow = rowToInt(curPos->row);
@@ -156,7 +164,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	tempNode->next_move[1] = NULL;
 	if (isMovePossible(tempNode->pos, nextLeftPos, tempNode->board)) {
 		SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		newLeft->board = tempNode->board;
+		copyBoard(tempNode->board, newLeft->board);
 		newLeft->pos = nextLeftPos;
 		newLeft->total_captures_so_far = tempNode->total_captures_so_far;
 		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE)
@@ -165,7 +173,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	}
 	if (isMovePossible(tempNode->pos, nextRightPos, tempNode->board)) {
 		SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		newRight->board = tempNode->board;
+		copyBoard(tempNode->board, newRight->board);
 		newRight->pos = nextRightPos;
 		newRight->total_captures_so_far = tempNode->total_captures_so_far;
 		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE)
@@ -190,7 +198,7 @@ SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 		char piece = findPiece(src, board);
 		SingleSourceMovesTree* tree = (SingleSourceMovesTree*)calloc(1, sizeof(SingleSourceMovesTree));
 		SingleSourceMovesTreeNode* root = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		root->board = board;
+		copyBoard(board, root->board);
 		root->pos = src;
 		root->total_captures_so_far = 0;
 		FindSingleSourceMovesRec(root, piece);
