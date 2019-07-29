@@ -47,7 +47,7 @@ typedef struct _multipleSourceMovesListCell {
 } MultipleSourceMovesList;
 
 int colToInt(char col) { // This function receives a position and returns its col's int equivalent
-	return atoi(col) - 1;
+	return col - '0' - 1;
 }
 
 int rowToInt(char row) { // This function receives a position and returns its row's int equivalent
