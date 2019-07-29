@@ -1,7 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #define BOARD_SIZE 8
 #define Tmask 00000001
@@ -102,9 +101,11 @@ void checkFile(FILE* f) { // This function checks if the file was opened success
 }
 
 void copyBoard(Board src_board, Board dest_board) {
-	int i;
+	int i, j;
 	for (i = 0; i < BOARD_SIZE; i++) {
-		strcpy(dest_board[i], src_board[i]);
+		for (j = 0; j < BOARD_SIZE; j++) {
+			dest_board[i][j] = src_board[i][j];
+		}
 	}
 }
 
