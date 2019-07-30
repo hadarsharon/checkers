@@ -84,7 +84,7 @@ BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board, char pi
 		return TRUE;
 }
 
-BOOL checkCapture(checkersPos* movePos, char piece, Board board) {
+BOOL isEnemy(checkersPos* movePos, char piece, Board board) {
 	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
 	// If an opponent game piece is in the box the game piece is moving to, mark a capture
 	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != ' ')
@@ -109,7 +109,7 @@ void copyBoard(Board src_board, Board dest_board) {
 	}
 }
 
-void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, checkersPos* nextRight, char curPiece) {
+void findNextMove(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, checkersPos* nextRight, char curPiece) {
 	checkersPos* curPos = curNode->pos;
 	int curRow = rowToInt(curPos->row);
 	int curCol = colToInt(curPos->col);
@@ -166,7 +166,7 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, ch
 SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
 	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
 	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
-	findNextCells(tempNode, nextLeftPos, nextRightPos, piece);
+	findNextMove(tempNode, nextLeftPos, nextRightPos, piece);
 	tempNode->next_move[0] = NULL;
 	tempNode->next_move[1] = NULL;
 	if (isMovePossible(tempNode->pos, nextLeftPos, tempNode->board, piece)) {
@@ -174,7 +174,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 		copyBoard(tempNode->board, newLeft->board);
 		newLeft->pos = nextLeftPos;
 		newLeft->total_captures_so_far = tempNode->total_captures_so_far;
-		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE) {
+		if (isEnemy(nextRightPos, piece, tempNode->board) == TRUE) {
 			newLeft->total_captures_so_far++;
 			tempNode->next_move[0] = FindSingleSourceMovesRec(newLeft, piece);
 		}
@@ -187,7 +187,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 		copyBoard(tempNode->board, newRight->board);
 		newRight->pos = nextRightPos;
 		newRight->total_captures_so_far = tempNode->total_captures_so_far;
-		if (checkCapture(nextRightPos, piece, tempNode->board) == TRUE) {
+		if (isEnemy(nextRightPos, piece, tempNode->board) == TRUE) {
 			newRight->total_captures_so_far++;
 			tempNode->next_move[1] = FindSingleSourceMovesRec(newRight, piece);
 		}
