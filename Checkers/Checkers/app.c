@@ -74,10 +74,9 @@ BOOL isGameOver(int curRow, char piece, char* winner) {
 		return FALSE;
 }
 
-BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board) {
+BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board, char piece) {
 	int srcRow = rowToInt(src->row), srcCol = colToInt(src->col);
 	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
-	char piece = board[srcRow][srcCol];
 	// Move is not possible if a friendly game piece is already there
 	if (board[moveRow][moveCol] == piece || movePos->col == NO_MOVE)
 		return FALSE;
@@ -110,11 +109,10 @@ void copyBoard(Board src_board, Board dest_board) {
 	}
 }
 
-void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, checkersPos* nextRight) {
+void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, checkersPos* nextRight, char curPiece) {
 	checkersPos* curPos = curNode->pos;
 	int curRow = rowToInt(curPos->row);
 	int curCol = colToInt(curPos->col);
-	char curPiece = curNode->board[curRow][curCol];
 	if ((curRow == 0 && curPiece == 'B') || (curRow == 7 && curPiece == 'T')) { // B or T reached the end
 		nextLeft->row = NO_MOVE;
 		nextLeft->col = NO_MOVE;
@@ -168,10 +166,10 @@ void findNextCells(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, ch
 SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
 	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
 	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
-	findNextCells(tempNode, nextLeftPos, nextRightPos);
+	findNextCells(tempNode, nextLeftPos, nextRightPos, piece);
 	tempNode->next_move[0] = NULL;
 	tempNode->next_move[1] = NULL;
-	if (isMovePossible(tempNode->pos, nextLeftPos, tempNode->board)) {
+	if (isMovePossible(tempNode->pos, nextLeftPos, tempNode->board, piece)) {
 		SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
 		copyBoard(tempNode->board, newLeft->board);
 		newLeft->pos = nextLeftPos;
@@ -184,7 +182,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 			tempNode->next_move[0] = newLeft;
 		}
 	}
-	if (isMovePossible(tempNode->pos, nextRightPos, tempNode->board)) {
+	if (isMovePossible(tempNode->pos, nextRightPos, tempNode->board, piece)) {
 		SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
 		copyBoard(tempNode->board, newRight->board);
 		newRight->pos = nextRightPos;
