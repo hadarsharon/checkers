@@ -302,53 +302,70 @@ SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	}
 }
 
-void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleSourceMovesList* optimalMovesList, unsigned short* leftCaptures, unsigned short* rightCaptures) {
+unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
 	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
 	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
 	if (leftMove == NULL && rightMove == NULL) {
-		return;
+		return 0;
 	}
 	else if (leftMove == NULL && rightMove != NULL) {
-		insertNodeToTail(optimalMovesList, rightMove);
-		*rightCaptures = rightMove->total_captures_so_far;
-		if (*rightCaptures != 0) {
-			FindSingleSourceOptimalMoveRec(rightMove, optimalMovesList, leftCaptures, rightCaptures);
-		}
+		if (rightMove->total_captures_so_far != 0)
+			return 1 + countTotalCaptures(rightMove);
+		else
+			return 0;
 	}
 	else if (leftMove != NULL && rightMove == NULL) {
-		insertNodeToTail(optimalMovesList, leftMove);
-		*leftCaptures = leftMove->total_captures_so_far;
-		if (*leftCaptures != 0) {
-			FindSingleSourceOptimalMoveRec(leftMove, optimalMovesList, leftCaptures, rightCaptures);
-		}
+		if (leftMove->total_captures_so_far != 0)
+			return 1 + countTotalCaptures(leftMove);
+		else
+			return 0;
 	}
 	else { // Both moves aren't NULL
-		*leftCaptures = leftMove->total_captures_so_far;
-		*rightCaptures = rightMove->total_captures_so_far;
-		if (*leftCaptures == 0 && *rightCaptures == 0) { // No captures
-			insertNodeToTail(optimalMovesList, leftMove); // Randomly add left
-		}
-		else if (*leftCaptures > *rightCaptures) {
-			insertNodeToTail(optimalMovesList, leftMove);
-			FindSingleSourceOptimalMoveRec(leftMove, optimalMovesList, leftCaptures, rightCaptures);
-		}
-		else if (*leftCaptures < *rightCaptures) {
-			insertNodeToTail(optimalMovesList, rightMove);
-			FindSingleSourceOptimalMoveRec(rightMove, optimalMovesList, leftCaptures, rightCaptures);
-		}
-		else { // leftCaptures == rightCaptures != 0
-
+		if (leftMove->total_captures_so_far == rightMove->total_captures_so_far == 0)
+			return 0;
+		else if (leftMove->total_captures_so_far > rightMove->total_captures_so_far)
+			return 1 + countTotalCaptures(leftMove);
+		else if (leftMove->total_captures_so_far < rightMove->total_captures_so_far)
+			return 1 + countTotalCaptures(rightMove);
+		else {
+			// Keep running on both recursively until one reaches NULL, then choose the one with more captures
+			int rightCaptures = 1 + countTotalCaptures(rightMove);
+			int leftCaptures = 1 + countTotalCaptures(leftMove);
+			if (leftCaptures >= rightCaptures) // Includes the possibility of equality, then randomly chooses left
+				return leftCaptures;
+			else
+				return rightCaptures;
 		}
 	}
 }
 
+void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleSourceMovesList* optimalMovesList) {
+	insertNodeToTail(optimalMovesList, treeNode);
+	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
+	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
+	if (leftMove == NULL && rightMove == NULL)
+		return;
+	else if (leftMove == NULL && rightMove != NULL)
+		FindSingleSourceOptimalMoveRec(rightMove, &optimalMovesList);
+	else if (leftMove != NULL && rightMove != NULL)
+		FindSingleSourceOptimalMoveRec(leftMove, &optimalMovesList);
+	else {
+		// Check which route has more captures
+		unsigned short leftCaptures = countTotalCaptures(leftMove);
+		unsigned short rightCaptures = countTotalCaptures(rightMove);
+		// Populate the list with the nodes of the route that has more captures
+		if (leftCaptures >= rightCaptures)
+			FindSingleSourceOptimalMoveRec(leftMove, &optimalMovesList);
+		else
+			FindSingleSourceOptimalMoveRec(rightMove, &optimalMovesList);
+	}
+}
 //Q2:
 SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_tree) {
 	SingleSourceMovesList optimalMoves = makeEmptyList();
 	SingleSourceMovesTreeNode* root = moves_tree->source;
-	insertNodeToTail(&optimalMoves, root);
-	unsigned short leftCaptures;
-	unsigned short rightCaptures;
+	FindSingleSourceOptimalMoveRec(root, &optimalMoves);
+	return &optimalMoves;
 }
 
 //Q3:
