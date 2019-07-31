@@ -191,37 +191,49 @@ checkersPos findNextMove(SingleSourceMovesTreeNode* curNode, BOOL* canCapture, c
 }
 
 SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
+	// Create left and right children
+	SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+	SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+	// Set these children to be the next moves of original node
+	tempNode->next_move[0] = newLeft;
+	tempNode->next_move[1] = newRight;
+	// Set children captures to 0
+	newLeft->total_captures_so_far = 0;
+	newRight->total_captures_so_far = 0;
+	// Update children boards using original node's board
+	copyBoard(tempNode->board, newLeft->board);
+	copyBoard(tempNode->board, newRight->board);
+	// Find left move position
 	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
+	BOOL leftCapture = FALSE;
+	*nextLeftPos = findNextMove(tempNode, &leftCapture, piece, 'l');
+	newLeft->pos = nextLeftPos;
+	// Check if a capture is possible and update total_captures_so_far accordingly
+	if (leftCapture == TRUE) {
+		newLeft->total_captures_so_far++;
+		newLeft = FindSingleSourceMovesRec(newLeft, piece);
+	}
+	// If no capture, check if move is possible - if not, set move to NULL
+	else if (newLeft->pos->col == NO_MOVE && newLeft->pos->row == NO_MOVE) {
+		newLeft->pos = NULL;
+		free(nextLeftPos);
+	}
+	// Find right move position
 	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
-	findNextMove(tempNode, nextLeftPos, nextRightPos, piece);
-	tempNode->next_move[0] = NULL;
-	tempNode->next_move[1] = NULL;
-	if (isMovePossible(tempNode->pos, nextLeftPos, tempNode->board, piece)) {
-		SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		copyBoard(tempNode->board, newLeft->board);
-		newLeft->pos = nextLeftPos;
-		newLeft->total_captures_so_far = tempNode->total_captures_so_far;
-		if (isEnemy(nextRightPos, piece, tempNode->board) == TRUE) {
-			newLeft->total_captures_so_far++;
-			tempNode->next_move[0] = FindSingleSourceMovesRec(newLeft, piece);
-		}
-		else {
-			tempNode->next_move[0] = newLeft;
-		}
+	BOOL rightCapture = FALSE;
+	*nextRightPos = findNextMove(tempNode, &rightCapture, piece, 'r');
+	newRight->pos = nextRightPos;
+	// Check if a capture is possible and update total_captures_so_far accordingly
+	if (rightCapture == TRUE) {
+		newRight->total_captures_so_far++;
+		newRight = FindSingleSourceMovesRec(newRight, piece);
 	}
-	if (isMovePossible(tempNode->pos, nextRightPos, tempNode->board, piece)) {
-		SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		copyBoard(tempNode->board, newRight->board);
-		newRight->pos = nextRightPos;
-		newRight->total_captures_so_far = tempNode->total_captures_so_far;
-		if (isEnemy(nextRightPos, piece, tempNode->board) == TRUE) {
-			newRight->total_captures_so_far++;
-			tempNode->next_move[1] = FindSingleSourceMovesRec(newRight, piece);
-		}
-		else {
-			tempNode->next_move[1] = newRight;
-		}
+	// If no capture, check if move is possible - if not, set move to NULL
+	else if (newRight->pos->col == NO_MOVE && newRight->pos->row == NO_MOVE) {
+		newRight->pos = NULL;
+		free(nextRightPos);
 	}
+	// Finally, return original node after his children have been updated
 	return tempNode;
 }
 
