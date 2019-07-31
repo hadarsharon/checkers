@@ -82,7 +82,7 @@ BOOL isGameOver(int curRow, char piece, char* winner) {
 		return FALSE;
 }
 
-BOOL isMovePossible(int row, int col, char piece, char direction, Board board) {
+BOOL isMovePossible(int row, int col, char piece, char direction) {
 	if ((row == 0 && piece == 'B') || (row == 7 && piece == 'T')) { // B or T reached the end
 		return FALSE;
 	}
@@ -107,6 +107,31 @@ BOOL isEnemy(checkersPos movePos, char piece, Board board) {
 		return TRUE;
 	else
 		return FALSE;
+}
+
+checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
+	checkersPos nextMove;
+	if (direction == 'r') {
+		if (piece == 'T') {
+			nextMove.row = curPos.row + 1;
+			nextMove.col = curPos.col + 1;
+		}
+		else if (piece == 'B') {
+			nextMove.row = curPos.row - 1;
+			nextMove.col = curPos.col + 1;
+		}
+	}
+	else if (direction == 'l') {
+		if (piece == 'T') {
+			nextMove.row = curPos.row + 1;
+			nextMove.col = curPos.col - 1;
+		}
+		else if (piece == 'B') {
+			nextMove.row = curPos.row - 1;
+			nextMove.col = curPos.col - 1;
+		}
+	}
+	return nextMove;
 }
 
 checkersPos findCaptureCell(checkersPos capturePos, char piece, char direction) {
@@ -139,37 +164,12 @@ void copyBoard(Board src_board, Board dest_board) {
 	}
 }
 
-checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
-	checkersPos nextMove;
-	if (direction == 'r') {
-		if (piece == 'T') {
-			nextMove.row = curPos.row + 1;
-			nextMove.col = curPos.col + 1;
-		}
-		else if (piece == 'B') {
-			nextMove.row = curPos.row - 1;
-			nextMove.col = curPos.col + 1;
-		}
-	}
-	else if (direction == 'l') {
-		if (piece == 'T') {
-			nextMove.row = curPos.row + 1;
-			nextMove.col = curPos.col - 1;
-		}
-		else if (piece == 'B') {
-			nextMove.row = curPos.row - 1;
-			nextMove.col = curPos.col - 1;
-		}
-	}
-	return nextMove;
-}
-
 checkersPos findNextMove(SingleSourceMovesTreeNode* curNode, BOOL* canCapture, char piece, char direction) {
 	checkersPos* curPos = curNode->pos;
 	checkersPos newMove;
 	int curRow = rowToInt(curPos->row);
 	int curCol = colToInt(curPos->col);
-	if (isMovePossible(curRow, curCol, piece, direction, curNode->board)) { //handle move
+	if (isMovePossible(curRow, curCol, piece, direction)) { //handle move
 		newMove = findNextCell(*curPos, piece, direction);
 		if (isEnemy(newMove, piece, curNode->board)) {
 			newMove = findCaptureCell(newMove, piece, direction);
