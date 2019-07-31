@@ -200,7 +200,9 @@ checkersPos findNextMove(SingleSourceMovesTreeNode* curNode, BOOL* canCapture, c
 SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
 	// Create left and right children
 	SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+	checkMemoryAllocation(newLeft);
 	SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+	checkMemoryAllocation(newRight);
 	// Set these children to be the next moves of original node
 	tempNode->next_move[0] = newLeft;
 	tempNode->next_move[1] = newRight;
@@ -212,6 +214,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	copyBoard(tempNode->board, newRight->board);
 	// Find left move position
 	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
+	checkMemoryAllocation(nextLeftPos);
 	BOOL leftCapture = FALSE;
 	*nextLeftPos = findNextMove(tempNode, &leftCapture, piece, 'l');
 	newLeft->pos = nextLeftPos;
@@ -230,6 +233,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	}
 	// Find right move position
 	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
+	checkMemoryAllocation(nextRightPos);
 	BOOL rightCapture = FALSE;
 	*nextRightPos = findNextMove(tempNode, &rightCapture, piece, 'r');
 	newRight->pos = nextRightPos;
