@@ -204,9 +204,9 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	// Set these children to be the next moves of original node
 	tempNode->next_move[0] = newLeft;
 	tempNode->next_move[1] = newRight;
-	// Set children captures to 0
-	newLeft->total_captures_so_far = 0;
-	newRight->total_captures_so_far = 0;
+	// Set children captures to their father's
+	newLeft->total_captures_so_far = tempNode->total_captures_so_far;
+	newRight->total_captures_so_far = tempNode->total_captures_so_far;
 	// Update children boards using original node's board
 	copyBoard(tempNode->board, newLeft->board);
 	copyBoard(tempNode->board, newRight->board);
@@ -397,16 +397,17 @@ int main() {
 	Board testBoard, newTestBoard;
 	checkersPos testPos;
 	SingleSourceMovesTree* testTree;
-	testPos.row = 'F';
-	testPos.col = '1';
+	testPos.row = 'C';
+	testPos.col = '8';
 	printf("Resetting...");
 	resetBoard(testBoard);
 	printf("Storing...");
 	StoreBoard(testBoard, "testfile.bin");
 	printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
-	newTestBoard[2][3] = ' ';
-	newTestBoard[4][1] = 'T';
+	newTestBoard[5][6] = ' ';
+	newTestBoard[3][6] = 'B';
+	newTestBoard[6][3] = ' ';
 	printBoard(newTestBoard);
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	printf("Done!");
