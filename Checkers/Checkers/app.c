@@ -46,19 +46,27 @@ typedef struct _multipleSourceMovesListCell {
 	struct _multipleSourceMovesListCell *next;
 } MultipleSourceMovesList;
 
-int colToInt(char col) { // This function receives a position and returns its col's int equivalent
-	return col - '0' - 1;
-}
-
-int rowToInt(char row) { // This function receives a position and returns its row's int equivalent
-	return row - 'A';
-}
 
 void checkMemoryAllocation(void* ptr) { // This function checks if the memory allocation succeeded
 	if (!ptr) { // We print an error and then exit this program
 		printf("Memory allocation failed");
 		exit(0);
 	}
+}
+
+void checkFile(FILE* f) { // This function checks if the file was opened successfully
+	if (!f) {
+		printf("Couldn't open the file\n");
+		exit(0);
+	}
+}
+
+int colToInt(char col) { // This function receives a position and returns its col's int equivalent
+	return col - '0' - 1;
+}
+
+int rowToInt(char row) { // This function receives a position and returns its row's int equivalent
+	return row - 'A';
 }
 
 BOOL isGameOver(int curRow, char piece, char* winner) {
@@ -74,18 +82,26 @@ BOOL isGameOver(int curRow, char piece, char* winner) {
 		return FALSE;
 }
 
-BOOL isMovePossible(checkersPos* src, checkersPos* movePos, Board board, char piece) {
-	int srcRow = rowToInt(src->row), srcCol = colToInt(src->col);
-	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
-	// Move is not possible if a friendly game piece is already there
-	if (board[moveRow][moveCol] == piece || movePos->col == NO_MOVE)
+BOOL isMovePossible(int row, int col, char piece, char direction, Board board) {
+	if ((row == 0 && piece == 'B') || (row == 7 && piece == 'T')) { // B or T reached the end
 		return FALSE;
-	else
-		return TRUE;
+	}
+	else if (direction == 'r') {
+		if (col == 7)
+			return FALSE;
+		else
+			return TRUE;
+	}
+	else if (direction == 'l') {
+		if (col == 0)
+			return FALSE;
+		else
+			return TRUE;
+	}
 }
 
-BOOL isEnemy(checkersPos* movePos, char piece, Board board) {
-	int moveRow = rowToInt(movePos->row), moveCol = colToInt(movePos->col);
+BOOL isEnemy(checkersPos movePos, char piece, Board board) {
+	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
 	// If an opponent game piece is in the box the game piece is moving to, mark a capture
 	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != ' ')
 		return TRUE;
@@ -93,11 +109,25 @@ BOOL isEnemy(checkersPos* movePos, char piece, Board board) {
 		return FALSE;
 }
 
-void checkFile(FILE* f) { // This function checks if the file was opened successfully
-	if (!f) {
-		printf("Couldn't open the file\n");
-		exit(0);
+checkersPos findCaptureCell(checkersPos capturePos, char piece, char direction) {
+	int curRow = rowToInt(capturePos.row);
+	int curCol = colToInt(capturePos.col);
+	checkersPos newMove;
+	newMove.row = NO_MOVE;
+	newMove.col = NO_MOVE;
+	if (isMovePossible(curRow, curCol, piece, direction)) {
+		newMove = findNextCell(capturePos, piece, direction);
 	}
+	return newMove;
+}
+
+BOOL isEmpty(checkersPos movePos, char piece, Board board) {
+	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
+	if (board[moveRow][moveCol] == ' ') {
+		return TRUE;
+	}
+	else
+		return FALSE;
 }
 
 void copyBoard(Board src_board, Board dest_board) {
@@ -109,58 +139,55 @@ void copyBoard(Board src_board, Board dest_board) {
 	}
 }
 
-void findNextMove(SingleSourceMovesTreeNode* curNode, checkersPos* nextLeft, checkersPos* nextRight, char curPiece) {
+checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
+	checkersPos nextMove;
+	if (direction == 'r') {
+		if (piece == 'T') {
+			nextMove.row = curPos.row + 1;
+			nextMove.col = curPos.col + 1;
+		}
+		else if (piece == 'B') {
+			nextMove.row = curPos.row - 1;
+			nextMove.col = curPos.col + 1;
+		}
+	}
+	else if (direction == 'l') {
+		if (piece == 'T') {
+			nextMove.row = curPos.row + 1;
+			nextMove.col = curPos.col - 1;
+		}
+		else if (piece == 'B') {
+			nextMove.row = curPos.row - 1;
+			nextMove.col = curPos.col - 1;
+		}
+	}
+	return nextMove;
+}
+
+checkersPos findNextMove(SingleSourceMovesTreeNode* curNode, BOOL* canCapture, char piece, char direction) {
 	checkersPos* curPos = curNode->pos;
+	checkersPos newMove;
 	int curRow = rowToInt(curPos->row);
 	int curCol = colToInt(curPos->col);
-	if ((curRow == 0 && curPiece == 'B') || (curRow == 7 && curPiece == 'T')) { // B or T reached the end
-		nextLeft->row = NO_MOVE;
-		nextLeft->col = NO_MOVE;
-		nextRight->row = NO_MOVE;
-		nextRight->col = NO_MOVE;
-	}
-	else if (curCol == 7) {
-		if (curPiece == 'B') {
-			nextRight->row = NO_MOVE;
-			nextRight->col = NO_MOVE;
-			nextLeft->row = curPos->row - 1;
-			nextLeft->col = curPos->col - 1;
+	if (isMovePossible(curRow, curCol, piece, direction, curNode->board)) { //handle move
+		newMove = findNextCell(*curPos, piece, direction);
+		if (isEnemy(newMove, piece, curNode->board)) {
+			newMove = findCaptureCell(newMove, piece, direction);
+			if ((newMove.row != NO_MOVE) && (newMove.col != NO_MOVE))
+				*canCapture = TRUE;
 		}
-		else if (curPiece == 'T') {
-			nextRight->row = NO_MOVE;
-			nextRight->col = NO_MOVE;
-			nextLeft->row = curPos->row + 1;
-			nextLeft->col = curPos->col - 1;
+		if (isEmpty(newMove, piece, curNode->board) == FALSE) {
+			newMove.row = NO_MOVE;
+			newMove.col = NO_MOVE;
+			*canCapture = FALSE;
 		}
 	}
-	else if (curCol == 0) {
-		if (curPiece == 'B') {
-			nextLeft->row = NO_MOVE;
-			nextLeft->col = NO_MOVE;
-			nextRight->row = curPos->row - 1;
-			nextRight->col = curPos->col + 1;
-		}
-		else if (curPiece == 'T') {
-			nextLeft->row = NO_MOVE;
-			nextLeft->col = NO_MOVE;
-			nextRight->row = curPos->row + 1;
-			nextRight->col = curPos->col + 1;
-		}
+	else {
+		newMove.row = NO_MOVE;
+		newMove.col = NO_MOVE;
+		*canCapture = FALSE;
 	}
-	else { // Row != 0,7 && Col != 0,7
-		if (curPiece == 'B') {
-			nextLeft->row = curPos->row - 1;
-			nextLeft->col = curPos->col - 1;
-			nextRight->row = curPos->row - 1;
-			nextRight->col = curPos->col + 1;
-		}
-		else if (curPiece == 'T') {
-			nextLeft->row = curPos->row + 1;
-			nextLeft->col = curPos->col - 1;
-			nextRight->row = curPos->row + 1;
-			nextRight->col = curPos->col + 1;
-		}
-	}
+	return newMove;
 }
 
 SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
@@ -325,7 +352,7 @@ void resetBoard(Board board) {
 				else
 					board[i][j] = 'B';
 			}
-		}	
+		}
 	}
 }
 
