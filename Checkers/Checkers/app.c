@@ -116,6 +116,13 @@ BOOL isEnemy(checkersPos movePos, char piece, Board board) {
 		return FALSE;
 }
 
+BOOL hasNoMove(checkersPos* pos) {
+	if (pos->col == NO_MOVE && pos->row == NO_MOVE)
+		return TRUE;
+	else
+		return FALSE;
+}
+
 checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
 	checkersPos nextMove;
 	if (direction == 'r') {
@@ -225,9 +232,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	}
 	// If no capture, check if move is possible - if not, set move to NULL
 	// If move is possible to an empty box but capture was already made - set to NULL
-	else if ( (newLeft->pos->col == NO_MOVE && newLeft->pos->row == NO_MOVE) ||
-			  (tempNode->total_captures_so_far != 0) 
-			) {
+	else if ( (hasNoMove(newLeft->pos)) || (tempNode->total_captures_so_far != 0) ) {
 		freeTreeNode(newLeft);
 		tempNode->next_move[0] = NULL;
 	}
@@ -243,9 +248,8 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 		newRight = FindSingleSourceMovesRec(newRight, piece);
 	}
 	// If no capture, check if move is possible - if not, set move to NULL
-	else if ((newRight->pos->col == NO_MOVE && newRight->pos->row == NO_MOVE) ||
-			(tempNode->total_captures_so_far != 0)
-			) {
+	// If move is possible to an empty box but capture was already made - set to NULL
+	else if ( (hasNoMove(newRight->pos)) ||	(tempNode->total_captures_so_far != 0) ) {
 		freeTreeNode(newRight);
 		tempNode->next_move[1] = NULL;
 	}
