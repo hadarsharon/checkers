@@ -69,6 +69,13 @@ int rowToInt(char row) { // This function receives a position and returns its ro
 	return row - 'A';
 }
 
+void freeTreeNode(SingleSourceMovesTreeNode* treeNode) {
+	free(treeNode->pos);
+	free(treeNode->next_move[0]);
+	free(treeNode->next_move[1]);
+	free(treeNode);
+}
+
 BOOL isGameOver(int curRow, char piece, char* winner) {
 	if (curRow == 0 && piece == 'B') { // B or T reached the end
 		*winner = 'B';
@@ -215,8 +222,8 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	}
 	// If no capture, check if move is possible - if not, set move to NULL
 	else if (newLeft->pos->col == NO_MOVE && newLeft->pos->row == NO_MOVE) {
-		newLeft->pos = NULL;
-		free(nextLeftPos);
+		freeTreeNode(newLeft);
+		tempNode->next_move[0] = NULL;
 	}
 	// Find right move position
 	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
@@ -230,8 +237,8 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	}
 	// If no capture, check if move is possible - if not, set move to NULL
 	else if (newRight->pos->col == NO_MOVE && newRight->pos->row == NO_MOVE) {
-		newRight->pos = NULL;
-		free(nextRightPos);
+		freeTreeNode(newRight);
+		tempNode->next_move[1] = NULL;
 	}
 	// Finally, return original node after his children have been updated
 	return tempNode;
@@ -393,6 +400,10 @@ int main() {
 	StoreBoard(testBoard, "testfile.bin");
 	printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
+	newTestBoard[5][2] = ' ';
+	newTestBoard[3][2] = 'B';
+	newTestBoard[2][3] = ' ';
+	newTestBoard[4][1] = 'T';
 	printBoard(newTestBoard);
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	printf("Done!");
