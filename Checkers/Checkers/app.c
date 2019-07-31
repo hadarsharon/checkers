@@ -262,6 +262,25 @@ char findPiece(checkersPos* src, Board board) {
 	return board[row][col];
 }
 
+SingleSourceMovesList makeEmptyList() {
+	SingleSourceMovesList lst;
+	lst.head = lst.tail = NULL;
+	return lst;
+}
+
+int isListEmpty(const SingleSourceMovesList* lst) {
+	return lst->head == NULL;
+}
+
+void insertNodeToTail(SingleSourceMovesList* lst, SingleSourceMovesTreeNode* newNode) {
+	if (isListEmpty(lst))
+		lst->head = lst->tail = newNode;
+	else {
+		lst->tail->next = newNode;
+		lst->tail = newNode;
+	}
+}
+
 //Q1:
 SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	// Check if the box contains a game piece, else return NULL
@@ -283,9 +302,53 @@ SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	}
 }
 
+void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleSourceMovesList* optimalMovesList, unsigned short* leftCaptures, unsigned short* rightCaptures) {
+	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
+	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
+	if (leftMove == NULL && rightMove == NULL) {
+		return;
+	}
+	else if (leftMove == NULL && rightMove != NULL) {
+		insertNodeToTail(optimalMovesList, rightMove);
+		*rightCaptures = rightMove->total_captures_so_far;
+		if (*rightCaptures != 0) {
+			FindSingleSourceOptimalMoveRec(rightMove, optimalMovesList, leftCaptures, rightCaptures);
+		}
+	}
+	else if (leftMove != NULL && rightMove == NULL) {
+		insertNodeToTail(optimalMovesList, leftMove);
+		*leftCaptures = leftMove->total_captures_so_far;
+		if (*leftCaptures != 0) {
+			FindSingleSourceOptimalMoveRec(leftMove, optimalMovesList, leftCaptures, rightCaptures);
+		}
+	}
+	else { // Both moves aren't NULL
+		*leftCaptures = leftMove->total_captures_so_far;
+		*rightCaptures = rightMove->total_captures_so_far;
+		if (*leftCaptures == 0 && *rightCaptures == 0) { // No captures
+			insertNodeToTail(optimalMovesList, leftMove); // Randomly add left
+		}
+		else if (*leftCaptures > *rightCaptures) {
+			insertNodeToTail(optimalMovesList, leftMove);
+			FindSingleSourceOptimalMoveRec(leftMove, optimalMovesList, leftCaptures, rightCaptures);
+		}
+		else if (*leftCaptures < *rightCaptures) {
+			insertNodeToTail(optimalMovesList, rightMove);
+			FindSingleSourceOptimalMoveRec(rightMove, optimalMovesList, leftCaptures, rightCaptures);
+		}
+		else { // leftCaptures == rightCaptures != 0
+
+		}
+	}
+}
+
 //Q2:
 SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_tree) {
-
+	SingleSourceMovesList optimalMoves = makeEmptyList();
+	SingleSourceMovesTreeNode* root = moves_tree->source;
+	insertNodeToTail(&optimalMoves, root);
+	unsigned short leftCaptures;
+	unsigned short rightCaptures;
 }
 
 //Q3:
