@@ -32,7 +32,7 @@ typedef struct _SingleSourceMovesTree {
 
 typedef struct _SingleSourceMovesListCell {
 	checkersPos *position;
-	unsigned short capturesr;
+	unsigned short captures;
 	struct _SingleSourceMovesListCell *next;
 } SingleSourceMovesListCell;
 
@@ -262,17 +262,23 @@ char findPiece(checkersPos* src, Board board) {
 	return board[row][col];
 }
 
-SingleSourceMovesList makeEmptyList() {
-	SingleSourceMovesList lst;
-	lst.head = lst.tail = NULL;
-	return lst;
+void makeEmptyList(SingleSourceMovesList* lst) {
+	lst->head = lst->tail = NULL;
 }
 
 int isListEmpty(const SingleSourceMovesList* lst) {
 	return lst->head == NULL;
 }
 
-void insertNodeToTail(SingleSourceMovesList* lst, SingleSourceMovesTreeNode* newNode) {
+SingleSourceMovesListCell* createNewListCell(SingleSourceMovesTreeNode* node) {
+	SingleSourceMovesListCell* newListCell = (SingleSourceMovesListCell*)calloc(1, sizeof(SingleSourceMovesListCell));
+	newListCell->next = NULL;
+	newListCell->captures = node->total_captures_so_far;
+	newListCell->position = node->pos;
+	return newListCell;
+}
+
+void insertNodeToTail(SingleSourceMovesList* lst, SingleSourceMovesListCell* newNode) {
 	if (isListEmpty(lst))
 		lst->head = lst->tail = newNode;
 	else {
@@ -340,32 +346,34 @@ unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
 }
 
 void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleSourceMovesList* optimalMovesList) {
-	insertNodeToTail(optimalMovesList, treeNode);
+	// Maybe we need to add a conditional that ensures captures != 0
+	insertNodeToTail(optimalMovesList, createNewListCell(treeNode));
 	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
 	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
 	if (leftMove == NULL && rightMove == NULL)
 		return;
 	else if (leftMove == NULL && rightMove != NULL)
-		FindSingleSourceOptimalMoveRec(rightMove, &optimalMovesList);
-	else if (leftMove != NULL && rightMove != NULL)
-		FindSingleSourceOptimalMoveRec(leftMove, &optimalMovesList);
+		FindSingleSourceOptimalMoveRec(rightMove, optimalMovesList);
+	else if (leftMove != NULL && rightMove == NULL)
+		FindSingleSourceOptimalMoveRec(leftMove, optimalMovesList);
 	else {
 		// Check which route has more captures
 		unsigned short leftCaptures = countTotalCaptures(leftMove);
 		unsigned short rightCaptures = countTotalCaptures(rightMove);
 		// Populate the list with the nodes of the route that has more captures
 		if (leftCaptures >= rightCaptures)
-			FindSingleSourceOptimalMoveRec(leftMove, &optimalMovesList);
+			FindSingleSourceOptimalMoveRec(leftMove, optimalMovesList);
 		else
-			FindSingleSourceOptimalMoveRec(rightMove, &optimalMovesList);
+			FindSingleSourceOptimalMoveRec(rightMove, optimalMovesList);
 	}
 }
 //Q2:
 SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_tree) {
-	SingleSourceMovesList optimalMoves = makeEmptyList();
+	SingleSourceMovesList* optimalMoves = (SingleSourceMovesList*)calloc(1, sizeof(SingleSourceMovesList));
+	makeEmptyList(optimalMoves);
 	SingleSourceMovesTreeNode* root = moves_tree->source;
-	FindSingleSourceOptimalMoveRec(root, &optimalMoves);
-	return &optimalMoves;
+	FindSingleSourceOptimalMoveRec(root, optimalMoves);
+	return optimalMoves;
 }
 
 //Q3:
@@ -485,19 +493,57 @@ int main() {
 	Board testBoard, newTestBoard;
 	checkersPos testPos;
 	SingleSourceMovesTree* testTree;
-	testPos.row = 'C';
-	testPos.col = '8';
+	SingleSourceMovesList* testList;
+	testPos.row = 'A';
+	testPos.col = '4';
 	printf("Resetting...");
 	resetBoard(testBoard);
 	printf("Storing...");
 	StoreBoard(testBoard, "testfile.bin");
 	printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
+	/* Test Q1
 	newTestBoard[5][6] = ' ';
 	newTestBoard[3][6] = 'B';
 	newTestBoard[6][3] = ' ';
 	printBoard(newTestBoard);
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
+	*/
+	// Q2 Test
+	newTestBoard[0][1] = ' ';
+	newTestBoard[0][5] = ' ';
+	newTestBoard[0][7] = ' ';
+	newTestBoard[1][0] = ' ';
+	newTestBoard[1][2] = 'B';
+	newTestBoard[1][4] = 'B';
+	newTestBoard[1][6] = ' ';
+	newTestBoard[2][1] = ' ';
+	newTestBoard[2][3] = ' ';
+	newTestBoard[2][5] = ' ';
+	newTestBoard[2][7] = ' ';
+	newTestBoard[3][0] = ' ';
+	newTestBoard[3][2] = ' ';
+	newTestBoard[3][4] = 'B';
+	newTestBoard[3][6] = 'B';
+	newTestBoard[4][1] = ' ';
+	newTestBoard[4][3] = ' ';
+	newTestBoard[4][5] = ' ';
+	newTestBoard[4][7] = ' ';
+	newTestBoard[5][0] = ' ';
+	newTestBoard[5][2] = ' ';
+	newTestBoard[5][4] = ' ';
+	newTestBoard[5][6] = ' ';
+	newTestBoard[6][1] = ' ';
+	newTestBoard[6][3] = ' ';
+	newTestBoard[6][5] = ' ';
+	newTestBoard[6][7] = ' ';
+	newTestBoard[7][0] = ' ';
+	newTestBoard[7][2] = ' ';
+	newTestBoard[7][4] = ' ';
+	newTestBoard[7][6] = ' ';
+	printBoard(newTestBoard);
+	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
+	testList = FindSingleSourceOptimalMove(testTree);
 	printf("Done!");
 	return 0;
 }
