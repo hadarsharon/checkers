@@ -280,7 +280,11 @@ void makeEmptyList(SingleSourceMovesList* lst) {
 	lst->head = lst->tail = NULL;
 }
 
-int isListEmpty(const SingleSourceMovesList* lst) {
+int isListEmptySingle(const SingleSourceMovesList* lst) {
+	return lst->head == NULL;
+}
+
+int isListEmptyMultiple(const MultipleSourceMovesList* lst) {
 	return lst->head == NULL;
 }
 
@@ -302,7 +306,7 @@ MultipleSourceMovesListCell* createNewListCellMultiple(SingleSourceMovesList* ls
 }
 
 void insertNodeToTailSingleSource(SingleSourceMovesList* lst, SingleSourceMovesListCell* newNode) {
-	if (isListEmpty(lst))
+	if (isListEmptySingle(lst))
 		lst->head = lst->tail = newNode;
 	else {
 		lst->tail->next = newNode;
@@ -311,7 +315,7 @@ void insertNodeToTailSingleSource(SingleSourceMovesList* lst, SingleSourceMovesL
 }
 // TODO: make these two functions variadic?
 void insertNodeToTailMultipleSource(MultipleSourceMovesList* lst, MultipleSourceMovesListCell* newNode) {
-	if (isListEmpty(lst))
+	if (isListEmptyMultiple(lst))
 		lst->head = lst->tail = newNode;
 	else {
 		lst->tail->next = newNode;
@@ -439,7 +443,7 @@ MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) 
 	while (playerGamePieces[i] != NULL) {
 		gamePieceMoves = FindSingleSourceMoves(board, playerGamePieces[i]);
 		gamePieceOptimalMoves = FindSingleSourceOptimalMove(gamePieceMoves);
-		insertNodeToTailMultipleSource(allPlayerPiecesPossibleMovesList, createNewListCellMultiple(gamePieceMoves));
+		insertNodeToTailMultipleSource(allPlayerPiecesPossibleMovesList, createNewListCellMultiple(gamePieceOptimalMoves));
 	}
 	return allPlayerPiecesPossibleMovesList;
 }
