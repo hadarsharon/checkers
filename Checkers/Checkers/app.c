@@ -6,6 +6,7 @@
 #define Tmask 1
 #define Bmask 2
 #define NO_MOVE '\0'
+#define GAME_PIECES_PER_PLAYER 12
 
 typedef int BOOL;
 #define TRUE 1
@@ -44,6 +45,11 @@ typedef struct _SingleSourceMovesList {
 typedef struct _multipleSourceMovesListCell {
 	SingleSourceMovesList *single_source_moves_list;
 	struct _multipleSourceMovesListCell *next;
+} MultipleSourceMovesListCell;
+
+typedef struct _MultipleSourceMovesList {
+	MultipleSourceMovesListCell* head;
+	MultipleSourceMovesListCell* tail;
 } MultipleSourceMovesList;
 
 
@@ -67,6 +73,14 @@ int colToInt(char col) { // This function receives a position and returns its co
 
 int rowToInt(char row) { // This function receives a position and returns its row's int equivalent
 	return row - 'A';
+}
+
+char colToChar(int row) { // This function receives an int and returns its col's char equivalent
+	return row + '0' + 1;
+}
+
+char rowToChar(int row) { // This function receives an int and returns its row's char equivalent
+	return row + 'A';
 }
 
 void freeTreeNode(SingleSourceMovesTreeNode* treeNode) {
@@ -270,15 +284,33 @@ int isListEmpty(const SingleSourceMovesList* lst) {
 	return lst->head == NULL;
 }
 
-SingleSourceMovesListCell* createNewListCell(SingleSourceMovesTreeNode* node) {
+SingleSourceMovesListCell* createNewListCellSingle(SingleSourceMovesTreeNode* node) {
 	SingleSourceMovesListCell* newListCell = (SingleSourceMovesListCell*)calloc(1, sizeof(SingleSourceMovesListCell));
+	checkMemoryAllocation(newListCell);
 	newListCell->next = NULL;
 	newListCell->captures = node->total_captures_so_far;
 	newListCell->position = node->pos;
 	return newListCell;
 }
 
-void insertNodeToTail(SingleSourceMovesList* lst, SingleSourceMovesListCell* newNode) {
+MultipleSourceMovesListCell* createNewListCellMultiple(SingleSourceMovesList* lst) {
+	MultipleSourceMovesListCell* newListCell = (MultipleSourceMovesListCell*)calloc(1, sizeof(MultipleSourceMovesListCell));
+	checkMemoryAllocation(newListCell);
+	newListCell->next = NULL;
+	newListCell->single_source_moves_list = lst;
+	return newListCell;
+}
+
+void insertNodeToTailSingleSource(SingleSourceMovesList* lst, SingleSourceMovesListCell* newNode) {
+	if (isListEmpty(lst))
+		lst->head = lst->tail = newNode;
+	else {
+		lst->tail->next = newNode;
+		lst->tail = newNode;
+	}
+}
+// TODO: make these two functions variadic?
+void insertNodeToTailMultipleSource(MultipleSourceMovesList* lst, MultipleSourceMovesListCell* newNode) {
 	if (isListEmpty(lst))
 		lst->head = lst->tail = newNode;
 	else {
@@ -346,8 +378,8 @@ unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
 }
 
 void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleSourceMovesList* optimalMovesList) {
-	// Maybe we need to add a conditional that ensures captures != 0
-	insertNodeToTail(optimalMovesList, createNewListCell(treeNode));
+	// TODO: Maybe we need to add a conditional that ensures captures != 0
+	insertNodeToTailSingleSource(optimalMovesList, createNewListCellSingle(treeNode));
 	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
 	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
 	if (leftMove == NULL && rightMove == NULL)
@@ -370,15 +402,46 @@ void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleS
 //Q2:
 SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_tree) {
 	SingleSourceMovesList* optimalMoves = (SingleSourceMovesList*)calloc(1, sizeof(SingleSourceMovesList));
+	checkMemoryAllocation(optimalMoves);
 	makeEmptyList(optimalMoves);
 	SingleSourceMovesTreeNode* root = moves_tree->source;
 	FindSingleSourceOptimalMoveRec(root, optimalMoves);
 	return optimalMoves;
 }
 
+checkersPos* findAllPlayerGamePieces(Board board, Player player) {
+	int i, j;
+	int num_of_pieces = 0; // Number of game pieces found
+	checkersPos* gamePieces = (checkersPos*)calloc(GAME_PIECES_PER_PLAYER, sizeof(checkersPos));
+	checkMemoryAllocation(gamePieces);
+	for (i = 0; i < BOARD_SIZE; i++) {
+		for (j = 0; j < BOARD_SIZE; j++) {
+			if (board[i][j] == player) {
+				gamePieces[num_of_pieces].row = rowToChar(i);
+				gamePieces[num_of_pieces].col = colToChar(j);
+				num_of_pieces++;
+			}
+		}
+	}
+	gamePieces = (checkersPos*)realloc(gamePieces, num_of_pieces * sizeof(checkersPos));
+	checkMemoryAllocation(gamePieces);
+	return gamePieces;
+}
+
 //Q3:
 MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) {
-
+	MultipleSourceMovesList* allPlayerPiecesPossibleMovesList = (MultipleSourceMovesList*)calloc(1, sizeof(MultipleSourceMovesList));
+	checkersPos** playerGamePieces = findAllPlayerGamePieces(board, player);
+	//checkersPos* playerGamePieces = findAllPlayerGamePieces(board, player);
+	int i = 0;
+	SingleSourceMovesTree* gamePieceMoves;
+	SingleSourceMovesList* gamePieceOptimalMoves;
+	while (playerGamePieces[i] != NULL) {
+		gamePieceMoves = FindSingleSourceMoves(board, playerGamePieces[i]);
+		gamePieceOptimalMoves = FindSingleSourceOptimalMove(gamePieceMoves);
+		insertNodeToTailMultipleSource(allPlayerPiecesPossibleMovesList, createNewListCellMultiple(gamePieceMoves));
+	}
+	return allPlayerPiecesPossibleMovesList;
 }
 
 //Q4:
