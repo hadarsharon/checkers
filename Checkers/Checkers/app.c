@@ -313,7 +313,6 @@ void insertNodeToTailSingleSource(SingleSourceMovesList* lst, SingleSourceMovesL
 		lst->tail = newNode;
 	}
 }
-// TODO: make these two functions variadic?
 void insertNodeToTailMultipleSource(MultipleSourceMovesList* lst, MultipleSourceMovesListCell* newNode) {
 	if (isListEmptyMultiple(lst))
 		lst->head = lst->tail = newNode;
@@ -413,21 +412,21 @@ SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_
 	return optimalMoves;
 }
 
-checkersPos* findAllPlayerGamePieces(Board board, Player player) {
+checkersPos** findAllPlayerGamePieces(Board board, Player player) {
 	int i, j;
 	int num_of_pieces = 0; // Number of game pieces found
-	checkersPos* gamePieces = (checkersPos*)calloc(GAME_PIECES_PER_PLAYER, sizeof(checkersPos));
+	checkersPos** gamePieces = (checkersPos**)calloc(GAME_PIECES_PER_PLAYER, sizeof(checkersPos*));
 	checkMemoryAllocation(gamePieces);
 	for (i = 0; i < BOARD_SIZE; i++) {
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (board[i][j] == player) {
-				gamePieces[num_of_pieces].row = rowToChar(i);
-				gamePieces[num_of_pieces].col = colToChar(j);
+				gamePieces[num_of_pieces]->row = rowToChar(i);
+				gamePieces[num_of_pieces]->col = colToChar(j);
 				num_of_pieces++;
 			}
 		}
 	}
-	gamePieces = (checkersPos*)realloc(gamePieces, num_of_pieces * sizeof(checkersPos));
+	gamePieces = (checkersPos**)realloc(gamePieces, num_of_pieces * sizeof(checkersPos*));
 	checkMemoryAllocation(gamePieces);
 	return gamePieces;
 }
@@ -436,7 +435,6 @@ checkersPos* findAllPlayerGamePieces(Board board, Player player) {
 MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) {
 	MultipleSourceMovesList* allPlayerPiecesPossibleMovesList = (MultipleSourceMovesList*)calloc(1, sizeof(MultipleSourceMovesList));
 	checkersPos** playerGamePieces = findAllPlayerGamePieces(board, player);
-	//checkersPos* playerGamePieces = findAllPlayerGamePieces(board, player);
 	int i = 0;
 	SingleSourceMovesTree* gamePieceMoves;
 	SingleSourceMovesList* gamePieceOptimalMoves;
