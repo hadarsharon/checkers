@@ -455,6 +455,16 @@ void removePiece(Board board, int row, int col) {
 	board[row][col] = EMPTY_BOX;
 }
 
+void printGame(Player player, checkersPos originalPos, checkersPos nextPos) {
+	char playerBStr[10] = "BOTTOM_UP";
+	char playerTStr[9] = "TOP_DOWN";
+	if (player == 'B')
+		printf("player %s's turn\n%c%c->%c%c\n", playerBStr, originalPos.row, originalPos.col, nextPos.row, nextPos.col);
+	else
+		printf("player %s's turn\n%c%c->%c%c\n", playerTStr, originalPos.row, originalPos.col, nextPos.row, nextPos.col);
+}
+
+
 void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) {
 	checkersPos* originalPos = moveset->head->position;
 	SingleSourceMovesListCell* move = moveset->head->next;
@@ -480,9 +490,11 @@ void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) 
 				removeRow = rowToInt(originalPos->row) + 1;
 			removePiece(board, removeRow, removeCol);
 		}
+
 		// Make the move and remove the original piece that just moved
 		board[moveRow][moveCol] = player;
 		removePiece(board, rowToInt(originalPos->row), colToInt(originalPos->col));
+		printGame(player, *originalPos, *move->position);
 		originalPos = move->position;
 		move = move->next;
 	}
@@ -655,7 +667,6 @@ void PlayGame(Board board, Player starting_player) {
 		Turn(board, curPlayer);
 		// Switch player for next turn
 		curPlayer = (curPlayer == 'B') ? 'T' : 'B';
-		printBoard(board);
 	}
 }
 
@@ -683,10 +694,6 @@ void resetBoard(Board board) {
 			}
 		}
 	}
-}
-
-void printGame() {
-
 }
 
 int main() {
