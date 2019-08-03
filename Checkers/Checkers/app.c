@@ -729,7 +729,7 @@ int main() {
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	testListSingle = FindSingleSourceOptimalMove(testTree);
 	testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
-	Turn(newTestBoard, 'T');
+	PlayGame(newTestBoard, 'T');
 	printBoard(newTestBoard);
 	printf("Done!");
 	return 0;
