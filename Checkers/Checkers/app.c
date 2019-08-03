@@ -93,16 +93,46 @@ void freeTreeNode(SingleSourceMovesTreeNode* treeNode) {
 	free(treeNode);
 }
 
-BOOL isGameOver(int curRow, char piece, char* winner) {
-	if (curRow == 0 && piece == 'B') { // B or T reached the end
+BOOL hasWinningPiece(Board board, Player player) {
+	int i, j;
+	if (player == 'B')
+		i = 0; // Row A
+	else if (player == 'T')
+		i = 7; // Row H
+	for (j = 0; j < BOARD_SIZE; j++) {
+		if (board[i][j] == player) { // Found winning game piece
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+BOOL noMoreGamePieces(Board board, Player player) {
+	int num_of_pieces;
+	// Don't care about return value, just let it fill num_of_pieces
+	findAllPlayerGamePieces(board, player, &num_of_pieces);
+	// Return True if no more game pieces, else False
+	return ((num_of_pieces == 0) ? TRUE : FALSE);
+}
+
+BOOL isGameOver(Board board, char* winner) {
+	if (hasWinningPiece(board, 'B') == TRUE) { // B reached the end
 		*winner = 'B';
 		return TRUE;
 	}
-	else if (curRow == 7 && piece == 'T') {
+	else if (hasWinningPiece(board, 'T') == TRUE) { // T reached the end
 		*winner = 'T';
 		return TRUE;
 	}
-	else
+	else if (noMoreGamePieces(board, 'T')) { // No more game pieces for T
+		*winner = 'B';
+		return TRUE;
+	}
+	else if (noMoreGamePieces(board, 'B')) { // No more game pieces for B
+		*winner = 'T';
+		return TRUE;
+	}
+	else // Neither have reached the end and both still have active game pieces
 		return FALSE;
 }
 
@@ -591,7 +621,7 @@ void LoadBoard(char *filename, Board board) {
 
 //Q7:
 void PlayGame(Board board, Player starting_player) {
-
+	while (isGameOver(
 }
 
 void resetBoard(Board board) {
