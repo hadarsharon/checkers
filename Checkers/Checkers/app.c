@@ -451,7 +451,34 @@ MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) 
 
 //Q4:
 void Turn(Board board, Player player) {
-
+	MultipleSourceMovesList* allPossiblePlayerMoves = FindAllPossiblePlayerMoves(board, player);
+	MultipleSourceMovesListCell* tempGamePieceMoveset = allPossiblePlayerMoves->head; // Used to iterate over possible moves
+	int highest_num_of_captures = 0; // Number of captures per move, used to choose the best move set
+	SingleSourceMovesList* chosenGamePieceMoveset = NULL; // The best move set to make based on number of captures
+	int tempMovesetPossibleCaptures;
+	// Find the move set with the highest possible number of captures
+	while (tempGamePieceMoveset != NULL) {
+		if (tempGamePieceMoveset->single_source_moves_list != NULL) { // Game piece has a possible move
+			tempMovesetPossibleCaptures = tempGamePieceMoveset->single_source_moves_list->tail->captures;
+			if (tempMovesetPossibleCaptures > highest_num_of_captures) {
+				chosenGamePieceMoveset = tempGamePieceMoveset->single_source_moves_list;
+				highest_num_of_captures = tempMovesetPossibleCaptures;
+			}
+		}
+		tempGamePieceMoveset = tempGamePieceMoveset->next; // Move on to next game piece
+	}
+	// If there are no moves possible whatsoever, do nothing
+	if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head == NULL) {
+		return;
+	}
+	// If no moveset with possible captures was found, pick the first one as it doesn't matter
+	else if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head != NULL) {
+		chosenGamePieceMoveset = allPossiblePlayerMoves->head->single_source_moves_list;
+	}
+	// Else - there was a moveset with possible captures and we need to handle it
+	else {
+		
+	}
 }
 
 //Q5:
@@ -615,6 +642,7 @@ int main() {
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	testListSingle = FindSingleSourceOptimalMove(testTree);
 	testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
+	Turn(newTestBoard, 'B');
 	printf("Done!");
 	return 0;
 }
