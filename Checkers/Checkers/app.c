@@ -494,10 +494,14 @@ void Turn(Board board, Player player) {
 	MultipleSourceMovesListCell* tempGamePieceMoveset = allPossiblePlayerMoves->head; // Used to iterate over possible moves
 	int highest_num_of_captures = 0; // Number of captures per move, used to choose the best move set
 	SingleSourceMovesList* chosenGamePieceMoveset = NULL; // The best move set to make based on number of captures
+	SingleSourceMovesList* randomGamePieceMoveset = NULL; // A random, possible move to make if necessary (in case no best move is found)
 	int tempMovesetPossibleCaptures;
 	// Find the move set with the highest possible number of captures
 	while (tempGamePieceMoveset != NULL) {
-		if (tempGamePieceMoveset->single_source_moves_list != NULL) { // Game piece has a possible move
+		if (tempGamePieceMoveset->single_source_moves_list->head->next != NULL) { // Game piece has a possible move
+			// Save the moveset as a possible random move
+			randomGamePieceMoveset = tempGamePieceMoveset->single_source_moves_list;
+			// Check if moveset is the best one yet
 			tempMovesetPossibleCaptures = tempGamePieceMoveset->single_source_moves_list->tail->captures;
 			if (tempMovesetPossibleCaptures > highest_num_of_captures) {
 				chosenGamePieceMoveset = tempGamePieceMoveset->single_source_moves_list;
@@ -507,12 +511,12 @@ void Turn(Board board, Player player) {
 		tempGamePieceMoveset = tempGamePieceMoveset->next; // Move on to next game piece
 	}
 	// If there are no moves possible whatsoever, do nothing
-	if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head->next == NULL) {
+	if (highest_num_of_captures == 0 && randomGamePieceMoveset == NULL) {
 		return;
 	}
-	// If no moveset with possible captures was found, pick the first one as it doesn't matter
-	else if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head->next != NULL) {
-		chosenGamePieceMoveset = allPossiblePlayerMoves->head->next->single_source_moves_list;
+	// If no moveset with possible captures was found, pick the random one as it doesn't matter
+	else if (highest_num_of_captures == 0 && randomGamePieceMoveset != NULL) {
+		chosenGamePieceMoveset = randomGamePieceMoveset;
 	}
 	// Perform the moveset on the board, if there are possible captures the function will handle it
 	performMoveset(board, player, chosenGamePieceMoveset);
@@ -650,7 +654,7 @@ void PlayGame(Board board, Player starting_player) {
 		// Make a move
 		Turn(board, curPlayer);
 		// Switch player for next turn
-		curPlayer = (starting_player == 'B') ? 'T' : 'B';
+		curPlayer = (curPlayer == 'B') ? 'T' : 'B';
 		printBoard(board);
 	}
 }
