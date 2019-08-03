@@ -482,9 +482,9 @@ void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) 
 		moveRow = rowToInt(move->position->row);
 		if (move->captures != 0) { // There was a capture - remove opponent game piece before making the move
 			direction = determineMoveDirection(originalPos, move->position);
-			if (direction == 'l')
+			if (direction == LEFT)
 				removeCol = originalPos->col - 1;
-			else if (direction == 'r')
+			else if (direction == RIGHT)
 				removeCol = originalPos->col + 1;
 			if (player == 'B')
 				removeRow = originalPos->row - 1;
