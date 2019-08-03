@@ -480,8 +480,10 @@ void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) 
 				removeRow = originalPos->row + 1;
 			removePiece(board, removeRow, removeCol);
 		}
-		// Make the move
+		// Make the move and remove the original piece that just moved
 		board[moveRow][moveCol] = player;
+		removePiece(board, rowToInt(originalPos->row), colToInt(originalPos->col));
+		originalPos = move->position;
 		move = move->next;
 	}
 }
