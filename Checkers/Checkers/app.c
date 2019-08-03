@@ -337,19 +337,19 @@ unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
 	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
 	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
 	if (leftMove == NULL && rightMove == NULL) {
-		return 0;
+		return treeNode->total_captures_so_far;
 	}
 	else if (leftMove == NULL && rightMove != NULL) {
 		if (rightMove->total_captures_so_far != 0)
 			return 1 + countTotalCaptures(rightMove);
 		else
-			return 0;
+			return treeNode->total_captures_so_far;
 	}
 	else if (leftMove != NULL && rightMove == NULL) {
 		if (leftMove->total_captures_so_far != 0)
 			return 1 + countTotalCaptures(leftMove);
 		else
-			return 0;
+			return treeNode->total_captures_so_far;
 	}
 	else { // Both moves aren't NULL
 		if (leftMove->total_captures_so_far == rightMove->total_captures_so_far == 0)
@@ -456,14 +456,17 @@ void removePiece(Board board, int row, int col) {
 }
 
 void printGame(Player player, checkersPos originalPos, checkersPos nextPos) {
+	printf("%c%c->%c%c\n", originalPos.row, originalPos.col, nextPos.row, nextPos.col);
+}
+
+void printTurn(Player player) {
 	char playerBStr[10] = "BOTTOM_UP";
 	char playerTStr[9] = "TOP_DOWN";
 	if (player == 'B')
-		printf("player %s's turn\n%c%c->%c%c\n", playerBStr, originalPos.row, originalPos.col, nextPos.row, nextPos.col);
+		printf("player %s's turn\n", playerBStr);
 	else
-		printf("player %s's turn\n%c%c->%c%c\n", playerTStr, originalPos.row, originalPos.col, nextPos.row, nextPos.col);
+		printf("player %s's turn\n", playerTStr);
 }
-
 
 void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) {
 	checkersPos* originalPos = moveset->head->position;
@@ -640,7 +643,6 @@ BOOL isGameOver(Board board, char* winner) {
 void printBoard(Board board) {
 	int i, j;
 	char row;
-	printf("\n"); //delete
 	printf("+-+-+-+-+-+-+-+-+-+\n+ ");
 	for (i = 1; i <= BOARD_SIZE; i++) {
 		printf("|%d", i);
@@ -664,6 +666,7 @@ void PlayGame(Board board, Player starting_player) {
 	Player curPlayer = starting_player;
 	while (isGameOver(board, &winner) == FALSE) {
 		// Make a move
+		printTurn(curPlayer);
 		Turn(board, curPlayer);
 		// Switch player for next turn
 		curPlayer = (curPlayer == 'B') ? 'T' : 'B';
@@ -704,11 +707,11 @@ int main() {
 	MultipleSourceMovesList* testListMultiple;
 	testPos.row = 'A';
 	testPos.col = '4';
-	printf("Resetting...");
+	//printf("Resetting...");
 	resetBoard(testBoard);
-	printf("Storing...");
+	//printf("Storing...");
 	StoreBoard(testBoard, "testfile.bin");
-	printf("Loading...");
+	//printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
 	/* Test Q1
 	newTestBoard[5][6] = EMPTY_BOX;
@@ -718,12 +721,12 @@ int main() {
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	*/
 	// Q2 & Q3 Test
-	printBoard(newTestBoard);
+	//printBoard(newTestBoard);
 	//testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	//testListSingle = FindSingleSourceOptimalMove(testTree);
 	//testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
 	PlayGame(newTestBoard, 'T');
-	printBoard(newTestBoard);
-	printf("Done!");
+	//printBoard(newTestBoard);
+	//printf("Done!");
 	return 0;
 }
