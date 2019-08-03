@@ -507,12 +507,12 @@ void Turn(Board board, Player player) {
 		tempGamePieceMoveset = tempGamePieceMoveset->next; // Move on to next game piece
 	}
 	// If there are no moves possible whatsoever, do nothing
-	if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head == NULL) {
+	if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head->next == NULL) {
 		return;
 	}
 	// If no moveset with possible captures was found, pick the first one as it doesn't matter
-	else if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head != NULL) {
-		chosenGamePieceMoveset = allPossiblePlayerMoves->head->single_source_moves_list;
+	else if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head->next != NULL) {
+		chosenGamePieceMoveset = allPossiblePlayerMoves->head->next->single_source_moves_list;
 	}
 	// Perform the moveset on the board, if there are possible captures the function will handle it
 	performMoveset(board, player, chosenGamePieceMoveset);
@@ -621,6 +621,27 @@ BOOL isGameOver(Board board, char* winner) {
 		return FALSE;
 }
 
+void printBoard(Board board) {
+	int i, j;
+	char row;
+	printf("\n"); //delete
+	printf("+-+-+-+-+-+-+-+-+-+\n+ ");
+	for (i = 1; i <= BOARD_SIZE; i++) {
+		printf("|%d", i);
+	}
+	printf("|\n");
+	for (i = 0; i < BOARD_SIZE; i++) {
+		row = i + 'A';
+		printf("+-+-+-+-+-+-+-+-+-+\n");
+		printf("|%c", 'A' + i);
+		for (j = 0; j < BOARD_SIZE; j++) {
+			printf("|%c", board[i][j]);
+		}
+		printf("|\n");
+	}
+	printf("+-+-+-+-+-+-+-+-+-+\n");
+}
+
 //Q7:
 void PlayGame(Board board, Player starting_player) {
 	char winner;
@@ -630,6 +651,7 @@ void PlayGame(Board board, Player starting_player) {
 		Turn(board, curPlayer);
 		// Switch player for next turn
 		curPlayer = (starting_player == 'B') ? 'T' : 'B';
+		printBoard(board);
 	}
 }
 
@@ -659,17 +681,8 @@ void resetBoard(Board board) {
 	}
 }
 
-void printBoard(Board board) {
-	int i, j;
-	char row;
-	printf("\n");
-	for (i = 0; i < BOARD_SIZE; i++) {
-		row = i + 'A';
-		for (j = 0; j < BOARD_SIZE; j++) {
-			printf("|%c|", board[i][j]);
-		}
-		printf("\n");
-	}
+void printGame() {
+
 }
 
 int main() {
@@ -694,41 +707,10 @@ int main() {
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	*/
 	// Q2 & Q3 Test
-	newTestBoard[0][1] = EMPTY_BOX;
-	newTestBoard[0][5] = EMPTY_BOX;
-	newTestBoard[0][7] = EMPTY_BOX;
-	newTestBoard[1][0] = EMPTY_BOX;
-	newTestBoard[1][2] = 'B';
-	newTestBoard[1][4] = 'B';
-	newTestBoard[1][6] = EMPTY_BOX;
-	newTestBoard[2][1] = EMPTY_BOX;
-	newTestBoard[2][3] = EMPTY_BOX;
-	newTestBoard[2][5] = EMPTY_BOX;
-	newTestBoard[2][7] = EMPTY_BOX;
-	newTestBoard[3][0] = EMPTY_BOX;
-	newTestBoard[3][2] = EMPTY_BOX;
-	newTestBoard[3][4] = 'B';
-	newTestBoard[3][6] = 'B';
-	newTestBoard[4][1] = EMPTY_BOX;
-	newTestBoard[4][3] = EMPTY_BOX;
-	newTestBoard[4][5] = EMPTY_BOX;
-	newTestBoard[4][7] = EMPTY_BOX;
-	newTestBoard[5][0] = EMPTY_BOX;
-	newTestBoard[5][2] = EMPTY_BOX;
-	newTestBoard[5][4] = EMPTY_BOX;
-	newTestBoard[5][6] = EMPTY_BOX;
-	newTestBoard[6][1] = EMPTY_BOX;
-	newTestBoard[6][3] = EMPTY_BOX;
-	newTestBoard[6][5] = EMPTY_BOX;
-	newTestBoard[6][7] = EMPTY_BOX;
-	newTestBoard[7][0] = EMPTY_BOX;
-	newTestBoard[7][2] = EMPTY_BOX;
-	newTestBoard[7][4] = EMPTY_BOX;
-	newTestBoard[7][6] = EMPTY_BOX;
 	printBoard(newTestBoard);
-	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
-	testListSingle = FindSingleSourceOptimalMove(testTree);
-	testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
+	//testTree = FindSingleSourceMoves(newTestBoard, &testPos);
+	//testListSingle = FindSingleSourceOptimalMove(testTree);
+	//testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
 	PlayGame(newTestBoard, 'T');
 	printBoard(newTestBoard);
 	printf("Done!");
