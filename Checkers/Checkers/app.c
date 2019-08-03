@@ -8,6 +8,7 @@
 #define NO_MOVE '\0'
 #define LEFT 'l'
 #define RIGHT 'r'
+#define EMPTY_BOX ' '
 #define GAME_PIECES_PER_PLAYER 12
 
 typedef int BOOL;
@@ -126,7 +127,7 @@ BOOL isMovePossible(int row, int col, char piece, char direction) {
 BOOL isEnemy(checkersPos movePos, char piece, Board board) {
 	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
 	// If an opponent game piece is in the box the game piece is moving to, mark a capture
-	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != ' ')
+	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != EMPTY_BOX)
 		return TRUE;
 	else
 		return FALSE;
@@ -178,7 +179,7 @@ checkersPos findCaptureCell(checkersPos capturePos, char piece, char direction) 
 
 BOOL isEmpty(checkersPos movePos, char piece, Board board) {
 	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
-	if (board[moveRow][moveCol] == ' ') {
+	if (board[moveRow][moveCol] == EMPTY_BOX) {
 		return TRUE;
 	}
 	else
@@ -327,7 +328,7 @@ void insertNodeToTailMultipleSource(MultipleSourceMovesList* lst, MultipleSource
 //Q1:
 SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 	// Check if the box contains a game piece, else return NULL
-	if (board[rowToInt(src->row)][colToInt(src->col)] == ' ') {
+	if (board[rowToInt(src->row)][colToInt(src->col)] == EMPTY_BOX) {
 		return NULL;
 	}
 	else {
@@ -464,7 +465,7 @@ char determineMoveDirection(checkersPos* origPos, checkersPos* movePos) {
 }
 
 void removePiece(Board board, int row, int col) {
-	board[row][col] = ' ';
+	board[row][col] = EMPTY_BOX;
 }
 
 void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) {
@@ -566,7 +567,7 @@ void LoadBoard(char *filename, Board board) {
 			if (j < BOARD_SIZE / 2) { //TODO: move to a function
 				curCell = firstByte >> 6;
 				if (curCell == 0)
-					board[i][j] = ' ';
+					board[i][j] = EMPTY_BOX;
 				else if (curCell == Tmask)
 					board[i][j] = 'T';
 				else
@@ -576,7 +577,7 @@ void LoadBoard(char *filename, Board board) {
 			else { //TODO: move to a function
 				curCell = secondByte >> 6;
 				if (curCell == 0)
-					board[i][j] = ' ';
+					board[i][j] = EMPTY_BOX;
 				else if (curCell == Tmask)
 					board[i][j] = 'T';
 				else
@@ -598,10 +599,10 @@ void resetBoard(Board board) {
 	for (i = 0; i < BOARD_SIZE; i++) {
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (i == 3 || i == 4) //these lines are empty
-				board[i][j] = ' ';
+				board[i][j] = EMPTY_BOX;
 			else if (i % 2 == 0) {
 				if (j % 2 == 0)
-					board[i][j] = ' ';
+					board[i][j] = EMPTY_BOX;
 				else if (i == 0 || i == 2)
 					board[i][j] = 'T';
 				else
@@ -609,7 +610,7 @@ void resetBoard(Board board) {
 			}
 			else {
 				if (j % 2 != 0)
-					board[i][j] = ' ';
+					board[i][j] = EMPTY_BOX;
 				else if (i == 1)
 					board[i][j] = 'T';
 				else
@@ -647,44 +648,44 @@ int main() {
 	printf("Loading...");
 	LoadBoard("testfile.bin", newTestBoard);
 	/* Test Q1
-	newTestBoard[5][6] = ' ';
+	newTestBoard[5][6] = EMPTY_BOX;
 	newTestBoard[3][6] = 'B';
-	newTestBoard[6][3] = ' ';
+	newTestBoard[6][3] = EMPTY_BOX;
 	printBoard(newTestBoard);
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	*/
 	// Q2 & Q3 Test
-	newTestBoard[0][1] = ' ';
-	newTestBoard[0][5] = ' ';
-	newTestBoard[0][7] = ' ';
-	newTestBoard[1][0] = ' ';
+	newTestBoard[0][1] = EMPTY_BOX;
+	newTestBoard[0][5] = EMPTY_BOX;
+	newTestBoard[0][7] = EMPTY_BOX;
+	newTestBoard[1][0] = EMPTY_BOX;
 	newTestBoard[1][2] = 'B';
 	newTestBoard[1][4] = 'B';
-	newTestBoard[1][6] = ' ';
-	newTestBoard[2][1] = ' ';
-	newTestBoard[2][3] = ' ';
-	newTestBoard[2][5] = ' ';
-	newTestBoard[2][7] = ' ';
-	newTestBoard[3][0] = ' ';
-	newTestBoard[3][2] = ' ';
+	newTestBoard[1][6] = EMPTY_BOX;
+	newTestBoard[2][1] = EMPTY_BOX;
+	newTestBoard[2][3] = EMPTY_BOX;
+	newTestBoard[2][5] = EMPTY_BOX;
+	newTestBoard[2][7] = EMPTY_BOX;
+	newTestBoard[3][0] = EMPTY_BOX;
+	newTestBoard[3][2] = EMPTY_BOX;
 	newTestBoard[3][4] = 'B';
 	newTestBoard[3][6] = 'B';
-	newTestBoard[4][1] = ' ';
-	newTestBoard[4][3] = ' ';
-	newTestBoard[4][5] = ' ';
-	newTestBoard[4][7] = ' ';
-	newTestBoard[5][0] = ' ';
-	newTestBoard[5][2] = ' ';
-	newTestBoard[5][4] = ' ';
-	newTestBoard[5][6] = ' ';
-	newTestBoard[6][1] = ' ';
-	newTestBoard[6][3] = ' ';
-	newTestBoard[6][5] = ' ';
-	newTestBoard[6][7] = ' ';
-	newTestBoard[7][0] = ' ';
-	newTestBoard[7][2] = ' ';
-	newTestBoard[7][4] = ' ';
-	newTestBoard[7][6] = ' ';
+	newTestBoard[4][1] = EMPTY_BOX;
+	newTestBoard[4][3] = EMPTY_BOX;
+	newTestBoard[4][5] = EMPTY_BOX;
+	newTestBoard[4][7] = EMPTY_BOX;
+	newTestBoard[5][0] = EMPTY_BOX;
+	newTestBoard[5][2] = EMPTY_BOX;
+	newTestBoard[5][4] = EMPTY_BOX;
+	newTestBoard[5][6] = EMPTY_BOX;
+	newTestBoard[6][1] = EMPTY_BOX;
+	newTestBoard[6][3] = EMPTY_BOX;
+	newTestBoard[6][5] = EMPTY_BOX;
+	newTestBoard[6][7] = EMPTY_BOX;
+	newTestBoard[7][0] = EMPTY_BOX;
+	newTestBoard[7][2] = EMPTY_BOX;
+	newTestBoard[7][4] = EMPTY_BOX;
+	newTestBoard[7][6] = EMPTY_BOX;
 	printBoard(newTestBoard);
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	testListSingle = FindSingleSourceOptimalMove(testTree);
