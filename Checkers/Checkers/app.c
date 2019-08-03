@@ -471,13 +471,13 @@ void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) 
 		if (move->captures != 0) { // There was a capture - remove opponent game piece before making the move
 			direction = determineMoveDirection(originalPos, move->position);
 			if (direction == LEFT)
-				removeCol = originalPos->col - 1;
+				removeCol = colToInt(originalPos->col) - 1;
 			else if (direction == RIGHT)
-				removeCol = originalPos->col + 1;
+				removeCol = colToInt(originalPos->col) + 1;
 			if (player == 'B')
-				removeRow = originalPos->row - 1;
+				removeRow = rowToInt(originalPos->row) - 1;
 			else if (player == 'T')
-				removeRow = originalPos->row + 1;
+				removeRow = rowToInt(originalPos->row) + 1;
 			removePiece(board, removeRow, removeCol);
 		}
 		// Make the move and remove the original piece that just moved
@@ -729,7 +729,7 @@ int main() {
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	testListSingle = FindSingleSourceOptimalMove(testTree);
 	testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
-	Turn(newTestBoard, 'B');
+	Turn(newTestBoard, 'T');
 	printBoard(newTestBoard);
 	printf("Done!");
 	return 0;
