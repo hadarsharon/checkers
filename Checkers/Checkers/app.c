@@ -509,6 +509,7 @@ void LoadBoard(char *filename, Board board) {
 			}
 		}
 	}
+	fclose(bin_file);
 }
 
 //Q7:
