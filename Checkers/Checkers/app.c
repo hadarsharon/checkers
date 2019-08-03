@@ -415,7 +415,7 @@ SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_
 checkersPos** findAllPlayerGamePieces(Board board, Player player) {
 	int i, j;
 	int num_of_pieces = 0; // Number of game pieces found
-	checkersPos** gamePieces = (checkersPos**)calloc(GAME_PIECES_PER_PLAYER, sizeof(checkersPos*));
+	checkersPos** gamePieces = (checkersPos**)calloc(GAME_PIECES_PER_PLAYER, sizeof(checkersPos*)); // Allocate maximum number of pieces and later reallocate
 	checkMemoryAllocation(gamePieces);
 	for (i = 0; i < BOARD_SIZE; i++) {
 		for (j = 0; j < BOARD_SIZE; j++) {
@@ -426,7 +426,7 @@ checkersPos** findAllPlayerGamePieces(Board board, Player player) {
 			}
 		}
 	}
-	gamePieces = (checkersPos**)realloc(gamePieces, num_of_pieces * sizeof(checkersPos*));
+	gamePieces = (checkersPos**)realloc(gamePieces, num_of_pieces * sizeof(checkersPos*)); // Reallocate according to number of actual pieces found
 	checkMemoryAllocation(gamePieces);
 	return gamePieces;
 }
@@ -434,14 +434,15 @@ checkersPos** findAllPlayerGamePieces(Board board, Player player) {
 //Q3:
 MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) {
 	MultipleSourceMovesList* allPlayerPiecesPossibleMovesList = (MultipleSourceMovesList*)calloc(1, sizeof(MultipleSourceMovesList));
-	checkersPos** playerGamePieces = findAllPlayerGamePieces(board, player);
+	checkersPos** playerGamePieces = findAllPlayerGamePieces(board, player); // First find all player's game pieces
 	int i = 0;
-	SingleSourceMovesTree* gamePieceMoves;
-	SingleSourceMovesList* gamePieceOptimalMoves;
+	SingleSourceMovesTree* gamePieceMoves; 
+	SingleSourceMovesList* gamePieceOptimalMoves; 
 	while (playerGamePieces[i] != NULL) {
-		gamePieceMoves = FindSingleSourceMoves(board, playerGamePieces[i]);
-		gamePieceOptimalMoves = FindSingleSourceOptimalMove(gamePieceMoves);
+		gamePieceMoves = FindSingleSourceMoves(board, playerGamePieces[i]); // Get all possible moves per piece
+		gamePieceOptimalMoves = FindSingleSourceOptimalMove(gamePieceMoves); // Get the optimal route per piece from aforementioned moves
 		insertNodeToTailMultipleSource(allPlayerPiecesPossibleMovesList, createNewListCellMultiple(gamePieceOptimalMoves));
+		i++;
 	}
 	return allPlayerPiecesPossibleMovesList;
 }
