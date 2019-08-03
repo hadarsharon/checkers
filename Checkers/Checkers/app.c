@@ -6,6 +6,8 @@
 #define Tmask 1
 #define Bmask 2
 #define NO_MOVE '\0'
+#define LEFT 'l'
+#define RIGHT 'r'
 #define GAME_PIECES_PER_PLAYER 12
 
 typedef int BOOL;
@@ -107,13 +109,13 @@ BOOL isMovePossible(int row, int col, char piece, char direction) {
 	if ((row == 0 && piece == 'B') || (row == 7 && piece == 'T')) { // B or T reached the end
 		return FALSE;
 	}
-	else if (direction == 'r') {
+	else if (direction == RIGHT) {
 		if (col == 7)
 			return FALSE;
 		else
 			return TRUE;
 	}
-	else if (direction == 'l') {
+	else if (direction == LEFT) {
 		if (col == 0)
 			return FALSE;
 		else
@@ -139,7 +141,7 @@ BOOL hasNoMove(checkersPos* pos) {
 
 checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
 	checkersPos nextMove;
-	if (direction == 'r') {
+	if (direction == RIGHT) {
 		if (piece == 'T') {
 			nextMove.row = curPos.row + 1;
 			nextMove.col = curPos.col + 1;
@@ -149,7 +151,7 @@ checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
 			nextMove.col = curPos.col + 1;
 		}
 	}
-	else if (direction == 'l') {
+	else if (direction == LEFT) {
 		if (piece == 'T') {
 			nextMove.row = curPos.row + 1;
 			nextMove.col = curPos.col - 1;
@@ -237,7 +239,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
 	checkMemoryAllocation(nextLeftPos);
 	BOOL leftCapture = FALSE;
-	*nextLeftPos = findNextMove(tempNode, &leftCapture, piece, 'l');
+	*nextLeftPos = findNextMove(tempNode, &leftCapture, piece, LEFT);
 	newLeft->pos = nextLeftPos;
 	// Check if a capture is possible and update total_captures_so_far accordingly
 	if (leftCapture == TRUE) {
@@ -254,7 +256,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
 	checkMemoryAllocation(nextRightPos);
 	BOOL rightCapture = FALSE;
-	*nextRightPos = findNextMove(tempNode, &rightCapture, piece, 'r');
+	*nextRightPos = findNextMove(tempNode, &rightCapture, piece, RIGHT);
 	newRight->pos = nextRightPos;
 	// Check if a capture is possible and update total_captures_so_far accordingly
 	if (rightCapture == TRUE) {
@@ -421,6 +423,7 @@ checkersPos** findAllPlayerGamePieces(Board board, Player player, int* num_of_pi
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (board[i][j] == player) {
 				gamePieces[n] = (checkersPos*)calloc(1, sizeof(checkersPos));
+				checkMemoryAllocation(gamePieces[n]);
 				gamePieces[n]->row = rowToChar(i);
 				gamePieces[n]->col = colToChar(j);
 				n++;
@@ -436,6 +439,7 @@ checkersPos** findAllPlayerGamePieces(Board board, Player player, int* num_of_pi
 //Q3:
 MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) {
 	MultipleSourceMovesList* allPlayerPiecesPossibleMovesList = (MultipleSourceMovesList*)calloc(1, sizeof(MultipleSourceMovesList));
+	checkMemoryAllocation(allPlayerPiecesPossibleMovesList);
 	int num_of_pieces = 0; // Number of player's game pieces found
 	checkersPos** playerGamePieces = findAllPlayerGamePieces(board, player, &num_of_pieces); // First find all player's game pieces
 	int i;
@@ -447,6 +451,51 @@ MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) 
 		insertNodeToTailMultipleSource(allPlayerPiecesPossibleMovesList, createNewListCellMultiple(gamePieceOptimalMoves));
 	}
 	return allPlayerPiecesPossibleMovesList;
+}
+
+
+char determineMoveDirection(checkersPos* origPos, checkersPos* movePos) {
+	if (origPos->col < movePos->col) // e.g. 1 -> 2
+		return RIGHT;
+	else if (origPos->col > movePos->col) // e.g. 2 -> 1
+		return LEFT;
+	else // no move, no direction
+		return NO_MOVE;
+}
+
+void removePiece(Board board, int row, int col) {
+	board[row][col] = ' ';
+}
+
+void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) {
+	checkersPos* originalPos = moveset->head->position;
+	SingleSourceMovesListCell* move = moveset->head->next;
+	char direction;
+	// Destination col & row (where to move)
+	int moveCol;
+	int moveRow;
+	// Remove col & row (in case of capture)
+	int removeCol;
+	int removeRow;
+	while (move != NULL) {
+		moveCol = colToInt(move->position->col);
+		moveRow = rowToInt(move->position->row);
+		if (move->captures != 0) { // There was a capture - remove opponent game piece before making the move
+			direction = determineMoveDirection(originalPos, move->position);
+			if (direction == 'l')
+				removeCol = originalPos->col - 1;
+			else if (direction == 'r')
+				removeCol = originalPos->col + 1;
+			if (player == 'B')
+				removeRow = originalPos->row - 1;
+			else if (player == 'T')
+				removeRow = originalPos->row + 1;
+			removePiece(board, removeRow, removeCol);
+		}
+		// Make the move
+		board[moveRow][moveCol] = player;
+		move = move->next;
+	}
 }
 
 //Q4:
@@ -475,10 +524,8 @@ void Turn(Board board, Player player) {
 	else if (highest_num_of_captures == 0 && allPossiblePlayerMoves->head != NULL) {
 		chosenGamePieceMoveset = allPossiblePlayerMoves->head->single_source_moves_list;
 	}
-	// Else - there was a moveset with possible captures and we need to handle it
-	else {
-		
-	}
+	// Perform the moveset on the board, if there are possible captures the function will handle it
+	performMoveset(board, player, chosenGamePieceMoveset);
 }
 
 //Q5:
