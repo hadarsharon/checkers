@@ -412,37 +412,39 @@ SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_
 	return optimalMoves;
 }
 
-checkersPos** findAllPlayerGamePieces(Board board, Player player) {
+checkersPos** findAllPlayerGamePieces(Board board, Player player, int* num_of_pieces) {
 	int i, j;
-	int num_of_pieces = 0; // Number of game pieces found
+	int n = 0; // Number of player's game pieces found so far
 	checkersPos** gamePieces = (checkersPos**)calloc(GAME_PIECES_PER_PLAYER, sizeof(checkersPos*)); // Allocate maximum number of pieces and later reallocate
 	checkMemoryAllocation(gamePieces);
 	for (i = 0; i < BOARD_SIZE; i++) {
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (board[i][j] == player) {
-				gamePieces[num_of_pieces]->row = rowToChar(i);
-				gamePieces[num_of_pieces]->col = colToChar(j);
-				num_of_pieces++;
+				gamePieces[n] = (checkersPos*)calloc(1, sizeof(checkersPos));
+				gamePieces[n]->row = rowToChar(i);
+				gamePieces[n]->col = colToChar(j);
+				n++;
 			}
 		}
 	}
-	gamePieces = (checkersPos**)realloc(gamePieces, num_of_pieces * sizeof(checkersPos*)); // Reallocate according to number of actual pieces found
+	gamePieces = (checkersPos**)realloc(gamePieces, n * sizeof(checkersPos*)); // Reallocate according to number of actual pieces found
 	checkMemoryAllocation(gamePieces);
+	*num_of_pieces = n;
 	return gamePieces;
 }
 
 //Q3:
 MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) {
 	MultipleSourceMovesList* allPlayerPiecesPossibleMovesList = (MultipleSourceMovesList*)calloc(1, sizeof(MultipleSourceMovesList));
-	checkersPos** playerGamePieces = findAllPlayerGamePieces(board, player); // First find all player's game pieces
-	int i = 0;
+	int num_of_pieces = 0; // Number of player's game pieces found
+	checkersPos** playerGamePieces = findAllPlayerGamePieces(board, player, &num_of_pieces); // First find all player's game pieces
+	int i;
 	SingleSourceMovesTree* gamePieceMoves; 
 	SingleSourceMovesList* gamePieceOptimalMoves; 
-	while (playerGamePieces[i] != NULL) {
+	for (i = 0; i < num_of_pieces; i++) {
 		gamePieceMoves = FindSingleSourceMoves(board, playerGamePieces[i]); // Get all possible moves per piece
 		gamePieceOptimalMoves = FindSingleSourceOptimalMove(gamePieceMoves); // Get the optimal route per piece from aforementioned moves
 		insertNodeToTailMultipleSource(allPlayerPiecesPossibleMovesList, createNewListCellMultiple(gamePieceOptimalMoves));
-		i++;
 	}
 	return allPlayerPiecesPossibleMovesList;
 }
@@ -560,7 +562,8 @@ int main() {
 	Board testBoard, newTestBoard;
 	checkersPos testPos;
 	SingleSourceMovesTree* testTree;
-	SingleSourceMovesList* testList;
+	SingleSourceMovesList* testListSingle;
+	MultipleSourceMovesList* testListMultiple;
 	testPos.row = 'A';
 	testPos.col = '4';
 	printf("Resetting...");
@@ -576,7 +579,7 @@ int main() {
 	printBoard(newTestBoard);
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
 	*/
-	// Q2 Test
+	// Q2 & Q3 Test
 	newTestBoard[0][1] = ' ';
 	newTestBoard[0][5] = ' ';
 	newTestBoard[0][7] = ' ';
@@ -610,7 +613,8 @@ int main() {
 	newTestBoard[7][6] = ' ';
 	printBoard(newTestBoard);
 	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
-	testList = FindSingleSourceOptimalMove(testTree);
+	testListSingle = FindSingleSourceOptimalMove(testTree);
+	testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
 	printf("Done!");
 	return 0;
 }
