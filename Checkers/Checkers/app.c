@@ -94,17 +94,18 @@ void freeTreeNode(SingleSourceMovesTreeNode* treeNode) {
 }
 
 BOOL isMovePossible(int row, int col, char piece, char direction) {
+	// Determine if the intended move is physically possible (destination box exists && is clear)
 	if ((row == 0 && piece == 'B') || (row == 7 && piece == 'T')) { // B or T reached the end
 		return FALSE;
 	}
 	else if (direction == RIGHT) {
-		if (col == 7)
+		if (col == 7) // Right end of board
 			return FALSE;
 		else
 			return TRUE;
 	}
 	else if (direction == LEFT) {
-		if (col == 0)
+		if (col == 0) // Left end of board
 			return FALSE;
 		else
 			return TRUE;
@@ -112,6 +113,7 @@ BOOL isMovePossible(int row, int col, char piece, char direction) {
 }
 
 BOOL isEnemy(checkersPos movePos, char piece, Board board) {
+	// Check if an enemy piece is in the intended move box
 	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
 	// If an opponent game piece is in the box the game piece is moving to, mark a capture
 	if (board[moveRow][moveCol] != piece && board[moveRow][moveCol] != EMPTY_BOX)
@@ -121,6 +123,7 @@ BOOL isEnemy(checkersPos movePos, char piece, Board board) {
 }
 
 BOOL hasNoMove(checkersPos* pos) {
+	// Check if a game piece has no possible based on its pos attribute
 	if (pos->col == NO_MOVE && pos->row == NO_MOVE)
 		return TRUE;
 	else
@@ -128,6 +131,7 @@ BOOL hasNoMove(checkersPos* pos) {
 }
 
 checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
+	// Return the next cell to move to, based on the game piece and its intended direction
 	checkersPos nextMove;
 	if (direction == RIGHT) {
 		if (piece == 'T') {
@@ -153,6 +157,11 @@ checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
 }
 
 checkersPos findCaptureCell(checkersPos capturePos, char piece, char direction) {
+	/* 
+	Find the next cell if there is a possible capture going on
+	(e.g. we moved from D2->E3 and there is an opponent there, so to make sure 
+	the capture is possible, we must check F4 is clear and return it to make the move)
+	*/
 	int curRow = rowToInt(capturePos.row);
 	int curCol = colToInt(capturePos.col);
 	checkersPos newMove;
@@ -165,6 +174,7 @@ checkersPos findCaptureCell(checkersPos capturePos, char piece, char direction) 
 }
 
 BOOL isEmpty(checkersPos movePos, char piece, Board board) {
+	// Determine if a certain box on the board is empty
 	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
 	if (board[moveRow][moveCol] == EMPTY_BOX) {
 		return TRUE;
@@ -183,6 +193,7 @@ void copyBoard(Board src_board, Board dest_board) {
 }
 
 checkersPos findNextMove(SingleSourceMovesTreeNode* curNode, BOOL* canCapture, char piece, char direction) {
+	// Find the next move based on piece and direction, and check if a capture is possible in the process
 	checkersPos* curPos = curNode->pos;
 	checkersPos newMove;
 	int curRow = rowToInt(curPos->row);
@@ -262,6 +273,7 @@ SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* t
 }
 
 char findPiece(checkersPos* src, Board board) {
+	// Gets a position on the board and returns B, T, or EMPTY_BOX
 	int row = rowToInt(src->row), col = colToInt(src->col);
 	return board[row][col];
 }
@@ -334,6 +346,7 @@ SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
 }
 
 unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
+	// Recursively finds the total number of possible captures per the given moves tree
 	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
 	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
 	if (leftMove == NULL && rightMove == NULL) {
@@ -371,7 +384,6 @@ unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
 }
 
 void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleSourceMovesList* optimalMovesList) {
-	// TODO: Maybe we need to add a conditional that ensures captures != 0
 	insertNodeToTailSingleSource(optimalMovesList, createNewListCellSingle(treeNode));
 	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
 	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
@@ -403,6 +415,8 @@ SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_
 }
 
 checkersPos** findAllPlayerGamePieces(Board board, Player player, int* num_of_pieces) {
+	// Find all player's game pieces on the board and return them as an array 
+	// (as well as the number of pieces found -> num_of_pieces)
 	int i, j;
 	int n = 0; // Number of player's game pieces found so far
 	checkersPos** gamePieces = (checkersPos**)calloc(GAME_PIECES_PER_PLAYER, sizeof(checkersPos*)); // Allocate maximum number of pieces and later reallocate
@@ -443,6 +457,8 @@ MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) 
 
 
 char determineMoveDirection(checkersPos* origPos, checkersPos* movePos) {
+	// Horizontal direction - based on column movement
+	// (Vertical direction can be assumed by game piece)
 	if (origPos->col < movePos->col) // e.g. 1 -> 2
 		return RIGHT;
 	else if (origPos->col > movePos->col) // e.g. 2 -> 1
@@ -456,6 +472,7 @@ void removePiece(Board board, int row, int col) {
 }
 
 void printGame(Player player, checkersPos originalPos, checkersPos nextPos) {
+	// e.g. C8->D7
 	printf("%c%c->%c%c\n", originalPos.row, originalPos.col, nextPos.row, nextPos.col);
 }
 
@@ -469,6 +486,7 @@ void printTurn(Player player) {
 }
 
 void performMoveset(Board board, Player player, SingleSourceMovesList* moveset) {
+	// Performs the given moveset on the board and removes opponent pieces when these are captured
 	checkersPos* originalPos = moveset->head->position;
 	SingleSourceMovesListCell* move = moveset->head->next;
 	char direction;
@@ -598,6 +616,10 @@ void LoadBoard(char *filename, Board board) {
 }
 
 BOOL hasWinningPiece(Board board, Player player) {
+	/* 
+	Returns TRUE if player has a piece in a winning position 
+	(row A for B, row H for T), else returns FALSE
+	*/
 	int i, j;
 	if (player == 'B')
 		i = 0; // Row A
@@ -612,10 +634,13 @@ BOOL hasWinningPiece(Board board, Player player) {
 }
 
 BOOL noMoreGamePieces(Board board, Player player) {
+	/* 
+	Checks how many game pieces player has on board, 
+	Returns TRUE if no more game pieces are found, else returns FALSE
+	*/
 	int num_of_pieces;
 	// Don't care about return value, just let it fill num_of_pieces
 	findAllPlayerGamePieces(board, player, &num_of_pieces);
-	// Return True if no more game pieces, else False
 	return ((num_of_pieces == 0) ? TRUE : FALSE);
 }
 
@@ -674,6 +699,7 @@ void PlayGame(Board board, Player starting_player) {
 }
 
 void resetBoard(Board board) {
+	// Reset the board to its default state
 	int i, j;
 	for (i = 0; i < BOARD_SIZE; i++) {
 		for (j = 0; j < BOARD_SIZE; j++) {
