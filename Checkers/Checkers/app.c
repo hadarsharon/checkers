@@ -1,59 +1,5 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include <stdio.h>
-#include <stdlib.h>
-
-#define BOARD_SIZE 8
-#define Tmask 1
-#define Bmask 2
-#define NO_MOVE '\0'
-#define LEFT 'l'
-#define RIGHT 'r'
-#define EMPTY_BOX ' '
-#define GAME_PIECES_PER_PLAYER 12
-
-typedef int BOOL;
-#define TRUE 1
-#define FALSE 0
-
-typedef struct _checkersPos {
-	char row, col;
-} checkersPos;
-
-typedef unsigned char Board[BOARD_SIZE][BOARD_SIZE];
-
-typedef unsigned char Player;
-
-typedef struct _SingleSourceMovesTreeNode {
-	Board board;
-	checkersPos *pos;
-	unsigned short total_captures_so_far;
-	struct _SingleSourceMovesTreeNode *next_move[2];
-} SingleSourceMovesTreeNode;
-
-typedef struct _SingleSourceMovesTree {
-	SingleSourceMovesTreeNode *source;
-} SingleSourceMovesTree;
-
-typedef struct _SingleSourceMovesListCell {
-	checkersPos *position;
-	unsigned short captures;
-	struct _SingleSourceMovesListCell *next;
-} SingleSourceMovesListCell;
-
-typedef struct _SingleSourceMovesList {
-	SingleSourceMovesListCell *head;
-	SingleSourceMovesListCell *tail;
-} SingleSourceMovesList;
-
-typedef struct _multipleSourceMovesListCell {
-	SingleSourceMovesList *single_source_moves_list;
-	struct _multipleSourceMovesListCell *next;
-} MultipleSourceMovesListCell;
-
-typedef struct _MultipleSourceMovesList {
-	MultipleSourceMovesListCell* head;
-	MultipleSourceMovesListCell* tail;
-} MultipleSourceMovesList;
+#include "structs.h"
+#include "prototypes.h"
 
 
 void checkMemoryAllocation(void* ptr) { // This function checks if the memory allocation succeeded
@@ -91,6 +37,217 @@ void freeTreeNode(SingleSourceMovesTreeNode* treeNode) {
 	free(treeNode->next_move[0]);
 	free(treeNode->next_move[1]);
 	free(treeNode);
+}
+
+BOOL isEmpty(checkersPos movePos, char piece, Board board) {
+	// Determine if a certain box on the board is empty
+	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
+	if (board[moveRow][moveCol] == EMPTY_BOX) {
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
+void copyBoard(Board src_board, Board dest_board) {
+	int i, j;
+	for (i = 0; i < BOARD_SIZE; i++) {
+		for (j = 0; j < BOARD_SIZE; j++) {
+			dest_board[i][j] = src_board[i][j];
+		}
+	}
+}
+
+checkersPos findNextMove(SingleSourceMovesTreeNode* curNode, BOOL* canCapture, char piece, char direction) {
+	// Find the next move based on piece and direction, and check if a capture is possible in the process
+	checkersPos* curPos = curNode->pos;
+	checkersPos newMove;
+	int curRow = rowToInt(curPos->row);
+	int curCol = colToInt(curPos->col);
+	if (isMovePossible(curRow, curCol, piece, direction)) { //handle move
+		newMove = findNextCell(*curPos, piece, direction);
+		if (isEnemy(newMove, piece, curNode->board)) {
+			newMove = findCaptureCell(newMove, piece, direction);
+			if ((newMove.row != NO_MOVE) && (newMove.col != NO_MOVE))
+				*canCapture = TRUE;
+		}
+		if (isEmpty(newMove, piece, curNode->board) == FALSE) {
+			newMove.row = NO_MOVE;
+			newMove.col = NO_MOVE;
+			*canCapture = FALSE;
+		}
+	}
+	else {
+		newMove.row = NO_MOVE;
+		newMove.col = NO_MOVE;
+		*canCapture = FALSE;
+	}
+	return newMove;
+}
+
+char findPiece(checkersPos* src, Board board) {
+	// Gets a position on the board and returns B, T, or EMPTY_BOX
+	int row = rowToInt(src->row), col = colToInt(src->col);
+	return board[row][col];
+}
+
+void makeEmptyList(SingleSourceMovesList* lst) {
+	lst->head = lst->tail = NULL;
+}
+
+int isListEmptySingle(const SingleSourceMovesList* lst) {
+	return lst->head == NULL;
+}
+
+int isListEmptyMultiple(const MultipleSourceMovesList* lst) {
+	return lst->head == NULL;
+}
+
+SingleSourceMovesListCell* createNewListCellSingle(SingleSourceMovesTreeNode* node) {
+	SingleSourceMovesListCell* newListCell = (SingleSourceMovesListCell*)calloc(1, sizeof(SingleSourceMovesListCell));
+	checkMemoryAllocation(newListCell);
+	newListCell->next = NULL;
+	newListCell->captures = node->total_captures_so_far;
+	newListCell->position = node->pos;
+	return newListCell;
+}
+
+MultipleSourceMovesListCell* createNewListCellMultiple(SingleSourceMovesList* lst) {
+	MultipleSourceMovesListCell* newListCell = (MultipleSourceMovesListCell*)calloc(1, sizeof(MultipleSourceMovesListCell));
+	checkMemoryAllocation(newListCell);
+	newListCell->next = NULL;
+	newListCell->single_source_moves_list = lst;
+	return newListCell;
+}
+
+void insertNodeToTailSingleSource(SingleSourceMovesList* lst, SingleSourceMovesListCell* newNode) {
+	if (isListEmptySingle(lst))
+		lst->head = lst->tail = newNode;
+	else {
+		lst->tail->next = newNode;
+		lst->tail = newNode;
+	}
+}
+
+void insertNodeToTailMultipleSource(MultipleSourceMovesList* lst, MultipleSourceMovesListCell* newNode) {
+	if (isListEmptyMultiple(lst))
+		lst->head = lst->tail = newNode;
+	else {
+		lst->tail->next = newNode;
+		lst->tail = newNode;
+	}
+}
+
+//Q1:
+SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
+	// Check if the box contains a game piece, else return NULL
+	if (board[rowToInt(src->row)][colToInt(src->col)] == EMPTY_BOX) {
+		return NULL;
+	}
+	else {
+		char piece = findPiece(src, board);
+		SingleSourceMovesTree* tree = (SingleSourceMovesTree*)calloc(1, sizeof(SingleSourceMovesTree));
+		checkMemoryAllocation(tree);
+		SingleSourceMovesTreeNode* root = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+		checkMemoryAllocation(root);
+		copyBoard(board, root->board);
+		root->pos = src;
+		root->total_captures_so_far = 0;
+		FindSingleSourceMovesRec(root, piece);
+		tree->source = root;
+		return tree;
+	}
+}
+
+SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
+	// Create left and right children
+	SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+	checkMemoryAllocation(newLeft);
+	SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
+	checkMemoryAllocation(newRight);
+	// Set these children to be the next moves of original node
+	tempNode->next_move[0] = newLeft;
+	tempNode->next_move[1] = newRight;
+	// Set children captures to their father's
+	newLeft->total_captures_so_far = tempNode->total_captures_so_far;
+	newRight->total_captures_so_far = tempNode->total_captures_so_far;
+	// Update children boards using original node's board
+	copyBoard(tempNode->board, newLeft->board);
+	copyBoard(tempNode->board, newRight->board);
+	// Find left move position
+	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
+	checkMemoryAllocation(nextLeftPos);
+	BOOL leftCapture = FALSE;
+	*nextLeftPos = findNextMove(tempNode, &leftCapture, piece, LEFT);
+	newLeft->pos = nextLeftPos;
+	// Check if a capture is possible and update total_captures_so_far accordingly
+	if (leftCapture == TRUE) {
+		newLeft->total_captures_so_far++;
+		newLeft = FindSingleSourceMovesRec(newLeft, piece);
+	}
+	// If no capture, check if move is possible - if not, set move to NULL
+	// If move is possible to an empty box but capture was already made - set to NULL
+	else if ((hasNoMove(newLeft->pos)) || (tempNode->total_captures_so_far != 0)) {
+		freeTreeNode(newLeft);
+		tempNode->next_move[0] = NULL;
+	}
+	// Find right move position
+	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
+	checkMemoryAllocation(nextRightPos);
+	BOOL rightCapture = FALSE;
+	*nextRightPos = findNextMove(tempNode, &rightCapture, piece, RIGHT);
+	newRight->pos = nextRightPos;
+	// Check if a capture is possible and update total_captures_so_far accordingly
+	if (rightCapture == TRUE) {
+		newRight->total_captures_so_far++;
+		newRight = FindSingleSourceMovesRec(newRight, piece);
+	}
+	// If no capture, check if move is possible - if not, set move to NULL
+	// If move is possible to an empty box but capture was already made - set to NULL
+	else if ((hasNoMove(newRight->pos)) || (tempNode->total_captures_so_far != 0)) {
+		freeTreeNode(newRight);
+		tempNode->next_move[1] = NULL;
+	}
+	// Finally, return original node after his children have been updated
+	return tempNode;
+}
+
+unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
+	// Recursively finds the total number of possible captures per the given moves tree
+	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
+	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
+	if (leftMove == NULL && rightMove == NULL) {
+		return treeNode->total_captures_so_far;
+	}
+	else if (leftMove == NULL && rightMove != NULL) {
+		if (rightMove->total_captures_so_far != 0)
+			return 1 + countTotalCaptures(rightMove);
+		else
+			return treeNode->total_captures_so_far;
+	}
+	else if (leftMove != NULL && rightMove == NULL) {
+		if (leftMove->total_captures_so_far != 0)
+			return 1 + countTotalCaptures(leftMove);
+		else
+			return treeNode->total_captures_so_far;
+	}
+	else { // Both moves aren't NULL
+		if (leftMove->total_captures_so_far == rightMove->total_captures_so_far == 0)
+			return 0;
+		else if (leftMove->total_captures_so_far > rightMove->total_captures_so_far)
+			return 1 + countTotalCaptures(leftMove);
+		else if (leftMove->total_captures_so_far < rightMove->total_captures_so_far)
+			return 1 + countTotalCaptures(rightMove);
+		else {
+			// Keep running on both recursively until one reaches NULL, then choose the one with more captures
+			int rightCaptures = 1 + countTotalCaptures(rightMove);
+			int leftCaptures = 1 + countTotalCaptures(leftMove);
+			if (leftCaptures >= rightCaptures) // Includes the possibility of equality, then randomly chooses left
+				return leftCaptures;
+			else
+				return rightCaptures;
+		}
+	}
 }
 
 BOOL isMovePossible(int row, int col, char piece, char direction) {
@@ -157,9 +314,9 @@ checkersPos findNextCell(checkersPos curPos, char piece, char direction) {
 }
 
 checkersPos findCaptureCell(checkersPos capturePos, char piece, char direction) {
-	/* 
+	/*
 	Find the next cell if there is a possible capture going on
-	(e.g. we moved from D2->E3 and there is an opponent there, so to make sure 
+	(e.g. we moved from D2->E3 and there is an opponent there, so to make sure
 	the capture is possible, we must check F4 is clear and return it to make the move)
 	*/
 	int curRow = rowToInt(capturePos.row);
@@ -173,214 +330,15 @@ checkersPos findCaptureCell(checkersPos capturePos, char piece, char direction) 
 	return newMove;
 }
 
-BOOL isEmpty(checkersPos movePos, char piece, Board board) {
-	// Determine if a certain box on the board is empty
-	int moveRow = rowToInt(movePos.row), moveCol = colToInt(movePos.col);
-	if (board[moveRow][moveCol] == EMPTY_BOX) {
-		return TRUE;
-	}
-	else
-		return FALSE;
-}
 
-void copyBoard(Board src_board, Board dest_board) {
-	int i, j;
-	for (i = 0; i < BOARD_SIZE; i++) {
-		for (j = 0; j < BOARD_SIZE; j++) {
-			dest_board[i][j] = src_board[i][j];
-		}
-	}
-}
-
-checkersPos findNextMove(SingleSourceMovesTreeNode* curNode, BOOL* canCapture, char piece, char direction) {
-	// Find the next move based on piece and direction, and check if a capture is possible in the process
-	checkersPos* curPos = curNode->pos;
-	checkersPos newMove;
-	int curRow = rowToInt(curPos->row);
-	int curCol = colToInt(curPos->col);
-	if (isMovePossible(curRow, curCol, piece, direction)) { //handle move
-		newMove = findNextCell(*curPos, piece, direction);
-		if (isEnemy(newMove, piece, curNode->board)) {
-			newMove = findCaptureCell(newMove, piece, direction);
-			if ((newMove.row != NO_MOVE) && (newMove.col != NO_MOVE))
-				*canCapture = TRUE;
-		}
-		if (isEmpty(newMove, piece, curNode->board) == FALSE) {
-			newMove.row = NO_MOVE;
-			newMove.col = NO_MOVE;
-			*canCapture = FALSE;
-		}
-	}
-	else {
-		newMove.row = NO_MOVE;
-		newMove.col = NO_MOVE;
-		*canCapture = FALSE;
-	}
-	return newMove;
-}
-
-SingleSourceMovesTreeNode* FindSingleSourceMovesRec(SingleSourceMovesTreeNode* tempNode, char piece) {
-	// Create left and right children
-	SingleSourceMovesTreeNode* newLeft = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-	checkMemoryAllocation(newLeft);
-	SingleSourceMovesTreeNode* newRight = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-	checkMemoryAllocation(newRight);
-	// Set these children to be the next moves of original node
-	tempNode->next_move[0] = newLeft;
-	tempNode->next_move[1] = newRight;
-	// Set children captures to their father's
-	newLeft->total_captures_so_far = tempNode->total_captures_so_far;
-	newRight->total_captures_so_far = tempNode->total_captures_so_far;
-	// Update children boards using original node's board
-	copyBoard(tempNode->board, newLeft->board);
-	copyBoard(tempNode->board, newRight->board);
-	// Find left move position
-	checkersPos* nextLeftPos = (checkersPos*)calloc(1, sizeof(checkersPos));
-	checkMemoryAllocation(nextLeftPos);
-	BOOL leftCapture = FALSE;
-	*nextLeftPos = findNextMove(tempNode, &leftCapture, piece, LEFT);
-	newLeft->pos = nextLeftPos;
-	// Check if a capture is possible and update total_captures_so_far accordingly
-	if (leftCapture == TRUE) {
-		newLeft->total_captures_so_far++;
-		newLeft = FindSingleSourceMovesRec(newLeft, piece);
-	}
-	// If no capture, check if move is possible - if not, set move to NULL
-	// If move is possible to an empty box but capture was already made - set to NULL
-	else if ( (hasNoMove(newLeft->pos)) || (tempNode->total_captures_so_far != 0) ) {
-		freeTreeNode(newLeft);
-		tempNode->next_move[0] = NULL;
-	}
-	// Find right move position
-	checkersPos* nextRightPos = (checkersPos*)calloc(1, sizeof(checkersPos));
-	checkMemoryAllocation(nextRightPos);
-	BOOL rightCapture = FALSE;
-	*nextRightPos = findNextMove(tempNode, &rightCapture, piece, RIGHT);
-	newRight->pos = nextRightPos;
-	// Check if a capture is possible and update total_captures_so_far accordingly
-	if (rightCapture == TRUE) {
-		newRight->total_captures_so_far++;
-		newRight = FindSingleSourceMovesRec(newRight, piece);
-	}
-	// If no capture, check if move is possible - if not, set move to NULL
-	// If move is possible to an empty box but capture was already made - set to NULL
-	else if ( (hasNoMove(newRight->pos)) ||	(tempNode->total_captures_so_far != 0) ) {
-		freeTreeNode(newRight);
-		tempNode->next_move[1] = NULL;
-	}
-	// Finally, return original node after his children have been updated
-	return tempNode;
-}
-
-char findPiece(checkersPos* src, Board board) {
-	// Gets a position on the board and returns B, T, or EMPTY_BOX
-	int row = rowToInt(src->row), col = colToInt(src->col);
-	return board[row][col];
-}
-
-void makeEmptyList(SingleSourceMovesList* lst) {
-	lst->head = lst->tail = NULL;
-}
-
-int isListEmptySingle(const SingleSourceMovesList* lst) {
-	return lst->head == NULL;
-}
-
-int isListEmptyMultiple(const MultipleSourceMovesList* lst) {
-	return lst->head == NULL;
-}
-
-SingleSourceMovesListCell* createNewListCellSingle(SingleSourceMovesTreeNode* node) {
-	SingleSourceMovesListCell* newListCell = (SingleSourceMovesListCell*)calloc(1, sizeof(SingleSourceMovesListCell));
-	checkMemoryAllocation(newListCell);
-	newListCell->next = NULL;
-	newListCell->captures = node->total_captures_so_far;
-	newListCell->position = node->pos;
-	return newListCell;
-}
-
-MultipleSourceMovesListCell* createNewListCellMultiple(SingleSourceMovesList* lst) {
-	MultipleSourceMovesListCell* newListCell = (MultipleSourceMovesListCell*)calloc(1, sizeof(MultipleSourceMovesListCell));
-	checkMemoryAllocation(newListCell);
-	newListCell->next = NULL;
-	newListCell->single_source_moves_list = lst;
-	return newListCell;
-}
-
-void insertNodeToTailSingleSource(SingleSourceMovesList* lst, SingleSourceMovesListCell* newNode) {
-	if (isListEmptySingle(lst))
-		lst->head = lst->tail = newNode;
-	else {
-		lst->tail->next = newNode;
-		lst->tail = newNode;
-	}
-}
-void insertNodeToTailMultipleSource(MultipleSourceMovesList* lst, MultipleSourceMovesListCell* newNode) {
-	if (isListEmptyMultiple(lst))
-		lst->head = lst->tail = newNode;
-	else {
-		lst->tail->next = newNode;
-		lst->tail = newNode;
-	}
-}
-
-//Q1:
-SingleSourceMovesTree *FindSingleSourceMoves(Board board, checkersPos *src) {
-	// Check if the box contains a game piece, else return NULL
-	if (board[rowToInt(src->row)][colToInt(src->col)] == EMPTY_BOX) {
-		return NULL;
-	}
-	else {
-		char piece = findPiece(src, board);
-		SingleSourceMovesTree* tree = (SingleSourceMovesTree*)calloc(1, sizeof(SingleSourceMovesTree));
-		checkMemoryAllocation(tree);
-		SingleSourceMovesTreeNode* root = (SingleSourceMovesTreeNode*)calloc(1, sizeof(SingleSourceMovesTreeNode));
-		checkMemoryAllocation(root);
-		copyBoard(board, root->board);
-		root->pos = src;
-		root->total_captures_so_far = 0;
-		FindSingleSourceMovesRec(root, piece);
-		tree->source = root;
-		return tree;
-	}
-}
-
-unsigned short countTotalCaptures(SingleSourceMovesTreeNode* treeNode) {
-	// Recursively finds the total number of possible captures per the given moves tree
-	SingleSourceMovesTreeNode* leftMove = treeNode->next_move[0];
-	SingleSourceMovesTreeNode* rightMove = treeNode->next_move[1];
-	if (leftMove == NULL && rightMove == NULL) {
-		return treeNode->total_captures_so_far;
-	}
-	else if (leftMove == NULL && rightMove != NULL) {
-		if (rightMove->total_captures_so_far != 0)
-			return 1 + countTotalCaptures(rightMove);
-		else
-			return treeNode->total_captures_so_far;
-	}
-	else if (leftMove != NULL && rightMove == NULL) {
-		if (leftMove->total_captures_so_far != 0)
-			return 1 + countTotalCaptures(leftMove);
-		else
-			return treeNode->total_captures_so_far;
-	}
-	else { // Both moves aren't NULL
-		if (leftMove->total_captures_so_far == rightMove->total_captures_so_far == 0)
-			return 0;
-		else if (leftMove->total_captures_so_far > rightMove->total_captures_so_far)
-			return 1 + countTotalCaptures(leftMove);
-		else if (leftMove->total_captures_so_far < rightMove->total_captures_so_far)
-			return 1 + countTotalCaptures(rightMove);
-		else {
-			// Keep running on both recursively until one reaches NULL, then choose the one with more captures
-			int rightCaptures = 1 + countTotalCaptures(rightMove);
-			int leftCaptures = 1 + countTotalCaptures(leftMove);
-			if (leftCaptures >= rightCaptures) // Includes the possibility of equality, then randomly chooses left
-				return leftCaptures;
-			else
-				return rightCaptures;
-		}
-	}
+//Q2:
+SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_tree) {
+	SingleSourceMovesList* optimalMoves = (SingleSourceMovesList*)calloc(1, sizeof(SingleSourceMovesList));
+	checkMemoryAllocation(optimalMoves);
+	makeEmptyList(optimalMoves);
+	SingleSourceMovesTreeNode* root = moves_tree->source;
+	FindSingleSourceOptimalMoveRec(root, optimalMoves);
+	return optimalMoves;
 }
 
 void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleSourceMovesList* optimalMovesList) {
@@ -403,15 +361,6 @@ void FindSingleSourceOptimalMoveRec(SingleSourceMovesTreeNode* treeNode, SingleS
 		else
 			FindSingleSourceOptimalMoveRec(rightMove, optimalMovesList);
 	}
-}
-//Q2:
-SingleSourceMovesList *FindSingleSourceOptimalMove(SingleSourceMovesTree *moves_tree) {
-	SingleSourceMovesList* optimalMoves = (SingleSourceMovesList*)calloc(1, sizeof(SingleSourceMovesList));
-	checkMemoryAllocation(optimalMoves);
-	makeEmptyList(optimalMoves);
-	SingleSourceMovesTreeNode* root = moves_tree->source;
-	FindSingleSourceOptimalMoveRec(root, optimalMoves);
-	return optimalMoves;
 }
 
 checkersPos** findAllPlayerGamePieces(Board board, Player player, int* num_of_pieces) {
@@ -454,7 +403,6 @@ MultipleSourceMovesList *FindAllPossiblePlayerMoves(Board board, Player player) 
 	}
 	return allPlayerPiecesPossibleMovesList;
 }
-
 
 char determineMoveDirection(checkersPos* origPos, checkersPos* movePos) {
 	// Horizontal direction - based on column movement
@@ -687,6 +635,7 @@ void printBoard(Board board) {
 
 //Q7:
 void PlayGame(Board board, Player starting_player) {
+	printBoard(board);
 	char winner;
 	Player curPlayer = starting_player;
 	while (isGameOver(board, &winner) == FALSE) {
@@ -696,63 +645,4 @@ void PlayGame(Board board, Player starting_player) {
 		// Switch player for next turn
 		curPlayer = (curPlayer == 'B') ? 'T' : 'B';
 	}
-}
-
-void resetBoard(Board board) {
-	// Reset the board to its default state
-	int i, j;
-	for (i = 0; i < BOARD_SIZE; i++) {
-		for (j = 0; j < BOARD_SIZE; j++) {
-			if (i == 3 || i == 4) //these lines are empty
-				board[i][j] = EMPTY_BOX;
-			else if (i % 2 == 0) {
-				if (j % 2 == 0)
-					board[i][j] = EMPTY_BOX;
-				else if (i == 0 || i == 2)
-					board[i][j] = 'T';
-				else
-					board[i][j] = 'B';
-			}
-			else {
-				if (j % 2 != 0)
-					board[i][j] = EMPTY_BOX;
-				else if (i == 1)
-					board[i][j] = 'T';
-				else
-					board[i][j] = 'B';
-			}
-		}
-	}
-}
-
-int main() {
-	Board testBoard, newTestBoard;
-	checkersPos testPos;
-	SingleSourceMovesTree* testTree;
-	SingleSourceMovesList* testListSingle;
-	MultipleSourceMovesList* testListMultiple;
-	testPos.row = 'A';
-	testPos.col = '4';
-	//printf("Resetting...");
-	resetBoard(testBoard);
-	//printf("Storing...");
-	StoreBoard(testBoard, "testfile.bin");
-	//printf("Loading...");
-	LoadBoard("testfile.bin", newTestBoard);
-	/* Test Q1
-	newTestBoard[5][6] = EMPTY_BOX;
-	newTestBoard[3][6] = 'B';
-	newTestBoard[6][3] = EMPTY_BOX;
-	printBoard(newTestBoard);
-	testTree = FindSingleSourceMoves(newTestBoard, &testPos);
-	*/
-	// Q2 & Q3 Test
-	//printBoard(newTestBoard);
-	//testTree = FindSingleSourceMoves(newTestBoard, &testPos);
-	//testListSingle = FindSingleSourceOptimalMove(testTree);
-	//testListMultiple = FindAllPossiblePlayerMoves(newTestBoard, 'B');
-	PlayGame(newTestBoard, 'T');
-	//printBoard(newTestBoard);
-	//printf("Done!");
-	return 0;
 }
